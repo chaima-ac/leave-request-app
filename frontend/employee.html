@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leave Management — My Requests</title>
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body class="login-body" style="align-items:flex-start; padding: 32px 24px;">
+
+<div class="dashboard-card">
+
+  <div class="dash-header">
+    <div>
+      <h2 id="welcomeMsg">My Leave Dashboard</h2>
+      <p style="font-size:0.85rem; color:#64748b; margin-top:2px;" id="userEmail"></p>
+    </div>
+    <div class="dash-user">
+      <button class="btn-logout" onclick="logout()">Sign out</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tabNew" onclick="switchTab('new')">New Request</button>
+    <button class="tab" id="tabHistory" onclick="switchTab('history')">My Requests</button>
+  </div>
+
+  <!-- NEW REQUEST -->
+  <div id="newSection">
+    <form id="leaveForm" onsubmit="submitRequest(event)">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div>
+          <label>Start Date</label>
+          <input type="date" id="start_date" required>
+        </div>
+        <div>
+          <label>End Date</label>
+          <input type="date" id="end_date" required>
+        </div>
+      </div>
+      <label>Leave Type</label>
+      <select id="leave_type">
+        <option>Vacation</option>
+        <option>Sick</option>
+        <option>Remote Work</option>
+        <option>Other</option>
+      </select>
+      <label>Comment <span style="font-weight:400; text-transform:none; font-size:0.8rem; color:#94a3b8;">(optional)</span></label>
+      <textarea id="comment" placeholder="Any additional details..."></textarea>
+      <button type="submit" class="submit-btn">Submit Request</button>
+    </form>
+    <div class="msg" id="formMsg"></div>
+  </div>
+
+  <!-- MY REQUESTS -->
+  <div id="historySection" style="display:none">
+    <div id="requestsContainer">
+      <div class="empty-state">
+        <span class="empty-icon">📋</span>
+        <p>Loading your requests...</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="loader" class="loader hidden"></div>
+<script src="js/employee-dashboard.js"></script>
+</body>
+</html>
