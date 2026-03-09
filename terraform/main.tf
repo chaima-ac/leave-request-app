@@ -13,11 +13,19 @@ terraform {
       version = "~> 3.0"
     }
   }
+
+  # S3 backend — stores tfstate in S3 so both
+  # your PC and GitHub Actions share the same state
+  backend "s3" {
+    bucket = "leavedesk-tfstate-chaima"
+    key    = "terraform.tfstate"
+    region = "us-east-1"
+  }
 }
 
 provider "aws" {
-  region = "us-east-1"
-  shared_credentials_files = ["C:\\Users\\USER\\OneDrive - Ministere de l'Enseignement Superieur et de la Recherche Scientifique\\Bureau\\pfa\\leave-request-app\\credentials"]
+  region                   = "us-east-1"
+  shared_credentials_files = ["C:\\Users\\USER\\Desktop\\leave-request-app\\credentials"]
 }
 
 # Get the LabRole
