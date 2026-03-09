@@ -1,0 +1,67 @@
+name: Deploy LeaveDesk to AWS
+
+on:
+  push:
+    branches:
+      - main  # runs every time you push to main branch
+
+jobs:
+  deploy:
+    name: Terraform Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # ── Step 1: Get the code ──────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # ── Step 2: Install Terraform ─────────────────────────
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      # ── Step 3: Configure AWS credentials ─────────────────
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token:     ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region:            us-east-1
+
+      # ── Step 4: Create credentials file for Terraform ─────
+      - name: Create credentials file
+        run: |
+          mkdir -p ${{ github.workspace }}
+          cat > ${{ github.workspace }}/credentials << EOF
+          [default]
+          aws_access_key_id     = ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_session_token     = ${{ secrets.AWS_SESSION_TOKEN }}
+          EOF
+
+      # ── Step 5: Create terraform.tfvars ───────────────────
+      - name: Create terraform.tfvars
+        run: |
+          cat > terraform/terraform.tfvars << EOF
+          admin_password = "${{ secrets.ADMIN_PASSWORD }}"
+          password_salt  = "${{ secrets.PASSWORD_SALT }}"
+          alert_email    = "${{ secrets.ALERT_EMAIL }}"
+          EOF
+
+      # ── Step 6: Terraform Init ─────────────────────────────
+      - name: Terraform Init
+        working-directory: terraform
+        run: terraform init
+
+      # ── Step 7: Terraform Plan (show what will change) ────
+      - name: Terraform Plan
+        working-directory: terraform
+        run: terraform plan
+
+      # ── Step 8: Terraform Apply (deploy to AWS) ────────────
+      - name: Terraform Apply
+        working-directory: terraform
+        run: terraform apply -auto-approve
