@@ -1,3 +1,9 @@
 .terraform/ 
 terraform/.terraform/ 
 terraform/.terraform.lock.hcl 
+credentials 
+terraform/terraform.tfvars 
+terraform/terraform.tfstate 
+terraform/terraform.tfstate.backup 
+"terraform/terraform.tfstate.*.backup" 
+terraform/lambda_function.zip 
