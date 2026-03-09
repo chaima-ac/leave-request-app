@@ -1,0 +1,1295 @@
+{
+  "version": 4,
+  "terraform_version": "1.14.5",
+  "serial": 73,
+  "lineage": "32e42c5c-3667-c818-09cf-05f2edd206d2",
+  "outputs": {
+    "api_endpoint": {
+      "value": "https://8kkcvt6w20.execute-api.us-east-1.amazonaws.com",
+      "type": "string"
+    },
+    "api_endpoint_with_stage": {
+      "value": "https://8kkcvt6w20.execute-api.us-east-1.amazonaws.com/",
+      "type": "string"
+    },
+    "cloudwatch_log_group_api": {
+      "value": "/aws/api-gateway/LeaveManagementAPI",
+      "type": "string"
+    },
+    "cloudwatch_log_group_lambda": {
+      "value": "/aws/lambda/LeaveRequestHandler",
+      "type": "string"
+    },
+    "dynamodb_table": {
+      "value": "LeaveRequests",
+      "type": "string"
+    },
+    "frontend_bucket": {
+      "value": "leave-management-frontend-mjdbklmg",
+      "type": "string"
+    },
+    "frontend_url": {
+      "value": "http://leave-management-frontend-mjdbklmg.s3-website-us-east-1.amazonaws.com",
+      "type": "string"
+    },
+    "lambda_function_arn": {
+      "value": "arn:aws:lambda:us-east-1:788387997840:function:LeaveRequestHandler",
+      "type": "string"
+    },
+    "lambda_function_name": {
+      "value": "LeaveRequestHandler",
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "mode": "data",
+      "type": "archive_file",
+      "name": "lambda_zip",
+      "provider": "provider[\"registry.terraform.io/hashicorp/archive\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "exclude_symlink_directories": null,
+            "excludes": null,
+            "id": "61554cbb279e5a6e3caab4f2e17fa7e14b2b9ef6",
+            "output_base64sha256": "QxBsxQPvtAzKiPbNahszV+cXaQYX98/EULHpr7j5r9Y=",
+            "output_base64sha512": "w69Z/XbKceZwQZaSFGFGGaBc/XdAjPEHH2WPwX3t+UFpkePEHKw/OIUGc+L6SEg9WAFldYu25HBJvvZTvH60CQ==",
+            "output_file_mode": null,
+            "output_md5": "c25dc10a0bd766cb0c5cc13a3494326d",
+            "output_path": "./lambda_function.zip",
+            "output_sha": "61554cbb279e5a6e3caab4f2e17fa7e14b2b9ef6",
+            "output_sha256": "43106cc503efb40cca88f6cd6a1b3357e717690617f7cfc450b1e9afb8f9afd6",
+            "output_sha512": "c3af59fd76ca71e67041969214614619a05cfd77408cf1071f658fc17dedf9416991e3c41cac3f38850673e2fa48483d580165758bb6e47049bef653bc7eb409",
+            "output_size": 1857,
+            "source": [],
+            "source_content": null,
+            "source_content_filename": null,
+            "source_dir": null,
+            "source_file": "./../backend/handler.py",
+            "type": "zip"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0
+        }
+      ]
+    },
+    {
+      "mode": "data",
+      "type": "aws_iam_role",
+      "name": "lab_role",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:iam::788387997840:role/LabRole",
+            "assume_role_policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::788387997840:role/LabRole\",\"Service\":[\"redshift.amazonaws.com\",\"secretsmanager.amazonaws.com\",\"codedeploy.amazonaws.com\",\"codewhisperer.amazonaws.com\",\"athena.amazonaws.com\",\"ecs.amazonaws.com\",\"cloudformation.amazonaws.com\",\"ec2.application-autoscaling.amazonaws.com\",\"eks.amazonaws.com\",\"elasticbeanstalk.amazonaws.com\",\"logs.amazonaws.com\",\"sqs.amazonaws.com\",\"deepracer.amazonaws.com\",\"s3.amazonaws.com\",\"eks-fargate-pods.amazonaws.com\",\"cloudtrail.amazonaws.com\",\"cognito-idp.amazonaws.com\",\"elasticloadbalancing.amazonaws.com\",\"glue.amazonaws.com\",\"elasticmapreduce.amazonaws.com\",\"kms.amazonaws.com\",\"sns.amazonaws.com\",\"iotanalytics.amazonaws.com\",\"kinesis.amazonaws.com\",\"kinesisanalytics.amazonaws.com\",\"ssm.amazonaws.com\",\"sagemaker.amazonaws.com\",\"databrew.amazonaws.com\",\"dynamodb.amazonaws.com\",\"rds.amazonaws.com\",\"codecommit.amazonaws.com\",\"lambda.amazonaws.com\",\"application-autoscaling.amazonaws.com\",\"rekognition.amazonaws.com\",\"elasticfilesystem.amazonaws.com\",\"iotevents.amazonaws.com\",\"firehose.amazonaws.com\",\"events.amazonaws.com\",\"apigateway.amazonaws.com\",\"states.amazonaws.com\",\"scheduler.amazonaws.com\",\"batch.amazonaws.com\",\"ec2.amazonaws.com\",\"forecast.amazonaws.com\",\"pipes.amazonaws.com\",\"iot.amazonaws.com\",\"ecs-tasks.amazonaws.com\",\"cloud9.amazonaws.com\",\"servicecatalog.amazonaws.com\",\"credentials.iot.amazonaws.com\",\"resource-groups.amazonaws.com\",\"backup.amazonaws.com\",\"autoscaling.amazonaws.com\"]},\"Action\":\"sts:AssumeRole\"}]}",
+            "create_date": "2026-02-22T11:08:38Z",
+            "description": "",
+            "id": "LabRole",
+            "max_session_duration": 3600,
+            "name": "LabRole",
+            "path": "/",
+            "permissions_boundary": "",
+            "role_last_used": [
+              {
+                "last_used_date": "2026-02-27T13:35:47Z",
+                "region": "us-east-1"
+              }
+            ],
+            "tags": {
+              "cloudlab": "c199793a5108193l13901260t1w788387997840"
+            },
+            "unique_id": "AROA3PD4WFCILT7QZPLUX"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_apigatewayv2_api",
+      "name": "leave_api",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "api_endpoint": "https://8kkcvt6w20.execute-api.us-east-1.amazonaws.com",
+            "api_key_selection_expression": "$request.header.x-api-key",
+            "arn": "arn:aws:apigateway:us-east-1::/apis/8kkcvt6w20",
+            "body": null,
+            "cors_configuration": [
+              {
+                "allow_credentials": false,
+                "allow_headers": [
+                  "content-type"
+                ],
+                "allow_methods": [
+                  "GET",
+                  "OPTIONS",
+                  "POST",
+                  "PUT"
+                ],
+                "allow_origins": [
+                  "*"
+                ],
+                "expose_headers": [],
+                "max_age": 0
+              }
+            ],
+            "credentials_arn": null,
+            "description": "",
+            "disable_execute_api_endpoint": false,
+            "execution_arn": "arn:aws:execute-api:us-east-1:788387997840:8kkcvt6w20",
+            "fail_on_warnings": null,
+            "id": "8kkcvt6w20",
+            "ip_address_type": "ipv4",
+            "name": "LeaveManagementAPI",
+            "protocol_type": "HTTP",
+            "route_key": null,
+            "route_selection_expression": "$request.method $request.path",
+            "tags": {},
+            "tags_all": {
+              "Environment": "Dev-School-Project",
+              "ManagedBy": "Terraform",
+              "Project": "GestionDeConges-Serverless"
+            },
+            "target": null,
+            "version": ""
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_apigatewayv2_integration",
+      "name": "lambda_integration",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "api_id": "8kkcvt6w20",
+            "connection_id": "",
+            "connection_type": "INTERNET",
+            "content_handling_strategy": "",
+            "credentials_arn": "",
+            "description": "",
+            "id": "iadmn9v",
+            "integration_method": "POST",
+            "integration_response_selection_expression": "",
+            "integration_subtype": "",
+            "integration_type": "AWS_PROXY",
+            "integration_uri": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:788387997840:function:LeaveRequestHandler/invocations",
+            "passthrough_behavior": "",
+            "payload_format_version": "1.0",
+            "request_parameters": {},
+            "request_templates": {},
+            "response_parameters": [],
+            "template_selection_expression": "",
+            "timeout_milliseconds": 30000,
+            "tls_config": []
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_apigatewayv2_api.leave_api",
+            "aws_lambda_function.leave_api_handler",
+            "data.archive_file.lambda_zip",
+            "data.aws_iam_role.lab_role"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_apigatewayv2_route",
+      "name": "get_requests",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "api_id": "8kkcvt6w20",
+            "api_key_required": false,
+            "authorization_scopes": [],
+            "authorization_type": "NONE",
+            "authorizer_id": "",
+            "id": "cmzzndq",
+            "model_selection_expression": "",
+            "operation_name": "",
+            "request_models": {},
+            "request_parameter": [],
+            "route_key": "GET /requests",
+            "route_response_selection_expression": "",
+            "target": "integrations/iadmn9v"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_apigatewayv2_api.leave_api",
+            "aws_apigatewayv2_integration.lambda",
+            "aws_apigatewayv2_integration.lambda_integration",
+            "aws_dynamodb_table.leave_requests",
+            "aws_lambda_function.leave_api_handler",
+            "data.archive_file.lambda_zip",
+            "data.aws_iam_role.lab_role"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_apigatewayv2_route",
+      "name": "update_status",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "api_id": "8kkcvt6w20",
+            "api_key_required": false,
+            "authorization_scopes": [],
+            "authorization_type": "NONE",
+            "authorizer_id": "",
+            "id": "xb0bkb4",
+            "model_selection_expression": "",
+            "operation_name": "",
+            "request_models": {},
+            "request_parameter": [],
+            "route_key": "PUT /request-status",
+            "route_response_selection_expression": "",
+            "target": "integrations/iadmn9v"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_apigatewayv2_api.leave_api",
+            "aws_apigatewayv2_integration.lambda",
+            "aws_apigatewayv2_integration.lambda_integration",
+            "aws_dynamodb_table.leave_requests",
+            "aws_lambda_function.leave_api_handler",
+            "data.archive_file.lambda_zip",
+            "data.aws_iam_role.lab_role"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_apigatewayv2_stage",
+      "name": "default",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "access_log_settings": [],
+            "api_id": "8kkcvt6w20",
+            "arn": "arn:aws:apigateway:us-east-1::/apis/8kkcvt6w20/stages/$default",
+            "auto_deploy": true,
+            "client_certificate_id": "",
+            "default_route_settings": [
+              {
+                "data_trace_enabled": false,
+                "detailed_metrics_enabled": false,
+                "logging_level": "",
+                "throttling_burst_limit": 0,
+                "throttling_rate_limit": 0
+              }
+            ],
+            "deployment_id": "ldii63",
+            "description": "",
+            "execution_arn": "arn:aws:execute-api:us-east-1:788387997840:8kkcvt6w20/$default",
+            "id": "$default",
+            "invoke_url": "https://8kkcvt6w20.execute-api.us-east-1.amazonaws.com/",
+            "name": "$default",
+            "route_settings": [],
+            "stage_variables": {},
+            "tags": {},
+            "tags_all": {
+              "Environment": "Dev-School-Project",
+              "ManagedBy": "Terraform",
+              "Project": "GestionDeConges-Serverless"
+            }
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_apigatewayv2_api.leave_api",
+            "aws_cloudwatch_log_group.api_logs"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_cloudwatch_log_group",
+      "name": "api_logs",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:logs:us-east-1:788387997840:log-group:/aws/api-gateway/LeaveManagementAPI",
+            "id": "/aws/api-gateway/LeaveManagementAPI",
+            "kms_key_id": "",
+            "log_group_class": "STANDARD",
+            "name": "/aws/api-gateway/LeaveManagementAPI",
+            "name_prefix": "",
+            "retention_in_days": 7,
+            "skip_destroy": false,
+            "tags": null,
+            "tags_all": {
+              "Environment": "Dev-School-Project",
+              "ManagedBy": "Terraform",
+              "Project": "GestionDeConges-Serverless"
+            }
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_dynamodb_table",
+      "name": "leave_requests",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:dynamodb:us-east-1:788387997840:table/LeaveRequests",
+            "attribute": [
+              {
+                "name": "created_at",
+                "type": "S"
+              },
+              {
+                "name": "employee_name",
+                "type": "S"
+              },
+              {
+                "name": "request_id",
+                "type": "S"
+              },
+              {
+                "name": "status",
+                "type": "S"
+              }
+            ],
+            "billing_mode": "PAY_PER_REQUEST",
+            "deletion_protection_enabled": false,
+            "global_secondary_index": [
+              {
+                "hash_key": "employee_name",
+                "name": "EmployeeIndex",
+                "non_key_attributes": [],
+                "on_demand_throughput": [],
+                "projection_type": "ALL",
+                "range_key": "created_at",
+                "read_capacity": 0,
+                "write_capacity": 0
+              },
+              {
+                "hash_key": "status",
+                "name": "StatusIndex",
+                "non_key_attributes": [],
+                "on_demand_throughput": [],
+                "projection_type": "ALL",
+                "range_key": "created_at",
+                "read_capacity": 0,
+                "write_capacity": 0
+              }
+            ],
+            "hash_key": "request_id",
+            "id": "LeaveRequests",
+            "import_table": [],
+            "local_secondary_index": [],
+            "name": "LeaveRequests",
+            "on_demand_throughput": [],
+            "point_in_time_recovery": [
+              {
+                "enabled": false,
+                "recovery_period_in_days": 0
+              }
+            ],
+            "range_key": null,
+            "read_capacity": 0,
+            "replica": [],
+            "restore_date_time": null,
+            "restore_source_name": null,
+            "restore_source_table_arn": null,
+            "restore_to_latest_time": null,
+            "server_side_encryption": [],
+            "stream_arn": "",
+            "stream_enabled": false,
+            "stream_label": "",
+            "stream_view_type": "",
+            "table_class": "STANDARD",
+            "tags": {
+              "Name": "LeaveRequests"
+            },
+            "tags_all": {
+              "Environment": "Dev-School-Project",
+              "ManagedBy": "Terraform",
+              "Name": "LeaveRequests",
+              "Project": "GestionDeConges-Serverless"
+            },
+            "timeouts": null,
+            "ttl": [
+              {
+                "attribute_name": "",
+                "enabled": false
+              }
+            ],
+            "write_capacity": 0
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxODAwMDAwMDAwMDAwLCJkZWxldGUiOjYwMDAwMDAwMDAwMCwidXBkYXRlIjozNjAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_lambda_function",
+      "name": "leave_api_handler",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "architectures": [
+              "x86_64"
+            ],
+            "arn": "arn:aws:lambda:us-east-1:788387997840:function:LeaveRequestHandler",
+            "code_sha256": "Y+5kdZtiv7mvGMmPt/sr/4EvgeaxchRLarwc8P7M4y8=",
+            "code_signing_config_arn": "",
+            "dead_letter_config": [],
+            "description": "",
+            "environment": [],
+            "ephemeral_storage": [
+              {
+                "size": 512
+              }
+            ],
+            "file_system_config": [],
+            "filename": "./lambda_function.zip",
+            "function_name": "LeaveRequestHandler",
+            "handler": "handler.lambda_handler",
+            "id": "LeaveRequestHandler",
+            "image_config": [],
+            "image_uri": "",
+            "invoke_arn": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:788387997840:function:LeaveRequestHandler/invocations",
+            "kms_key_arn": "",
+            "last_modified": "2026-02-27T13:27:47.000+0000",
+            "layers": [],
+            "logging_config": [
+              {
+                "application_log_level": "",
+                "log_format": "Text",
+                "log_group": "/aws/lambda/LeaveRequestHandler",
+                "system_log_level": ""
+              }
+            ],
+            "memory_size": 128,
+            "package_type": "Zip",
+            "publish": false,
+            "qualified_arn": "arn:aws:lambda:us-east-1:788387997840:function:LeaveRequestHandler:$LATEST",
+            "qualified_invoke_arn": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:788387997840:function:LeaveRequestHandler:$LATEST/invocations",
+            "replace_security_groups_on_destroy": null,
+            "replacement_security_group_ids": null,
+            "reserved_concurrent_executions": -1,
+            "role": "arn:aws:iam::788387997840:role/LabRole",
+            "runtime": "python3.13",
+            "s3_bucket": null,
+            "s3_key": null,
+            "s3_object_version": null,
+            "signing_job_arn": "",
+            "signing_profile_version_arn": "",
+            "skip_destroy": false,
+            "snap_start": [],
+            "source_code_hash": "Y+5kdZtiv7mvGMmPt/sr/4EvgeaxchRLarwc8P7M4y8=",
+            "source_code_size": 878,
+            "tags": {},
+            "tags_all": {
+              "Environment": "Dev-School-Project",
+              "ManagedBy": "Terraform",
+              "Project": "GestionDeConges-Serverless"
+            },
+            "timeout": 3,
+            "timeouts": null,
+            "tracing_config": [
+              {
+                "mode": "PassThrough"
+              }
+            ],
+            "version": "$LATEST",
+            "vpc_config": []
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwLCJ1cGRhdGUiOjYwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_dynamodb_table.leave_requests",
+            "data.archive_file.lambda_zip",
+            "data.aws_iam_role.lab_role"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_lambda_permission",
+      "name": "api_gw",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "action": "lambda:InvokeFunction",
+            "event_source_token": null,
+            "function_name": "LeaveRequestHandler",
+            "function_url_auth_type": null,
+            "id": "AllowExecutionFromAPIGateway",
+            "principal": "apigateway.amazonaws.com",
+            "principal_org_id": null,
+            "qualifier": "",
+            "source_account": null,
+            "source_arn": "arn:aws:execute-api:us-east-1:788387997840:8kkcvt6w20/*/*",
+            "statement_id": "AllowExecutionFromAPIGateway",
+            "statement_id_prefix": ""
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_apigatewayv2_api.leave_api",
+            "aws_dynamodb_table.leave_requests",
+            "aws_lambda_function.leave_api_handler",
+            "data.archive_file.lambda_zip",
+            "data.aws_iam_role.lab_role"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_s3_bucket",
+      "name": "frontend",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "acceleration_status": "",
+            "acl": null,
+            "arn": "arn:aws:s3:::leave-management-frontend-mjdbklmg",
+            "bucket": "leave-management-frontend-mjdbklmg",
+            "bucket_domain_name": "leave-management-frontend-mjdbklmg.s3.amazonaws.com",
+            "bucket_prefix": "",
+            "bucket_regional_domain_name": "leave-management-frontend-mjdbklmg.s3.us-east-1.amazonaws.com",
+            "cors_rule": [],
+            "force_destroy": false,
+            "grant": [
+              {
+                "id": "04dafbc0e4bed283059274c093797a35e6ebad8dd4ef58f92308d5467d44fccc",
+                "permissions": [
+                  "FULL_CONTROL"
+                ],
+                "type": "CanonicalUser",
+                "uri": ""
+              }
+            ],
+            "hosted_zone_id": "Z3AQBSTGFYJSTF",
+            "id": "leave-management-frontend-mjdbklmg",
+            "lifecycle_rule": [],
+            "logging": [],
+            "object_lock_configuration": [],
+            "object_lock_enabled": false,
+            "policy": "",
+            "region": "us-east-1",
+            "replication_configuration": [],
+            "request_payer": "BucketOwner",
+            "server_side_encryption_configuration": [
+              {
+                "rule": [
+                  {
+                    "apply_server_side_encryption_by_default": [
+                      {
+                        "kms_master_key_id": "",
+                        "sse_algorithm": "AES256"
+                      }
+                    ],
+                    "bucket_key_enabled": false
+                  }
+                ]
+              }
+            ],
+            "tags": {
+              "Name": "LeaveManagementFrontend"
+            },
+            "tags_all": {
+              "Environment": "Dev-School-Project",
+              "ManagedBy": "Terraform",
+              "Name": "LeaveManagementFrontend",
+              "Project": "GestionDeConges-Serverless"
+            },
+            "timeouts": null,
+            "versioning": [
+              {
+                "enabled": false,
+                "mfa_delete": false
+              }
+            ],
+            "website": [],
+            "website_domain": null,
+            "website_endpoint": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjM2MDAwMDAwMDAwMDAsInJlYWQiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "random_string.bucket_suffix"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_s3_bucket_public_access_block",
+      "name": "frontend",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "block_public_acls": false,
+            "block_public_policy": false,
+            "bucket": "leave-management-frontend-mjdbklmg",
+            "id": "leave-management-frontend-mjdbklmg",
+            "ignore_public_acls": false,
+            "restrict_public_buckets": false
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.frontend",
+            "random_string.bucket_suffix"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_s3_bucket_website_configuration",
+      "name": "frontend",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "bucket": "leave-management-frontend-mjdbklmg",
+            "error_document": [
+              {
+                "key": "error.html"
+              }
+            ],
+            "expected_bucket_owner": "",
+            "id": "leave-management-frontend-mjdbklmg",
+            "index_document": [
+              {
+                "suffix": "index.html"
+              }
+            ],
+            "redirect_all_requests_to": [],
+            "routing_rule": [],
+            "routing_rules": "",
+            "website_domain": "s3-website-us-east-1.amazonaws.com",
+            "website_endpoint": "leave-management-frontend-mjdbklmg.s3-website-us-east-1.amazonaws.com"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.frontend",
+            "random_string.bucket_suffix"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_s3_object",
+      "name": "frontend_files",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "index_key": "admin.html",
+          "schema_version": 0,
+          "attributes": {
+            "acl": null,
+            "arn": "arn:aws:s3:::leave-management-frontend-mjdbklmg/admin.html",
+            "bucket": "leave-management-frontend-mjdbklmg",
+            "bucket_key_enabled": false,
+            "cache_control": "",
+            "checksum_algorithm": null,
+            "checksum_crc32": "",
+            "checksum_crc32c": "",
+            "checksum_crc64nvme": "",
+            "checksum_sha1": "",
+            "checksum_sha256": "",
+            "content": null,
+            "content_base64": null,
+            "content_disposition": "",
+            "content_encoding": "",
+            "content_language": "",
+            "content_type": "text/html",
+            "etag": "1758c342321af82957db6ce0d7786855",
+            "force_destroy": false,
+            "id": "admin.html",
+            "key": "admin.html",
+            "kms_key_id": null,
+            "metadata": null,
+            "object_lock_legal_hold_status": "",
+            "object_lock_mode": "",
+            "object_lock_retain_until_date": "",
+            "override_provider": [],
+            "server_side_encryption": "AES256",
+            "source": "../frontend/admin.html",
+            "source_hash": null,
+            "storage_class": "STANDARD",
+            "tags": null,
+            "tags_all": {
+              "Environment": "Dev-School-Project",
+              "ManagedBy": "Terraform",
+              "Project": "GestionDeConges-Serverless"
+            },
+            "version_id": "",
+            "website_redirect": ""
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.frontend",
+            "random_string.bucket_suffix"
+          ]
+        },
+        {
+          "index_key": "css/main.css",
+          "schema_version": 0,
+          "attributes": {
+            "acl": null,
+            "arn": "arn:aws:s3:::leave-management-frontend-mjdbklmg/css/main.css",
+            "bucket": "leave-management-frontend-mjdbklmg",
+            "bucket_key_enabled": false,
+            "cache_control": "",
+            "checksum_algorithm": null,
+            "checksum_crc32": "",
+            "checksum_crc32c": "",
+            "checksum_crc64nvme": "",
+            "checksum_sha1": "",
+            "checksum_sha256": "",
+            "content": null,
+            "content_base64": null,
+            "content_disposition": "",
+            "content_encoding": "",
+            "content_language": "",
+            "content_type": "text/css",
+            "etag": "ce87cb5142cdf1d3c5f813611f71ee62",
+            "force_destroy": false,
+            "id": "css/main.css",
+            "key": "css/main.css",
+            "kms_key_id": null,
+            "metadata": null,
+            "object_lock_legal_hold_status": "",
+            "object_lock_mode": "",
+            "object_lock_retain_until_date": "",
+            "override_provider": [],
+            "server_side_encryption": "AES256",
+            "source": "../frontend/css/main.css",
+            "source_hash": null,
+            "storage_class": "STANDARD",
+            "tags": null,
+            "tags_all": {
+              "Environment": "Dev-School-Project",
+              "ManagedBy": "Terraform",
+              "Project": "GestionDeConges-Serverless"
+            },
+            "version_id": "",
+            "website_redirect": ""
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.frontend",
+            "random_string.bucket_suffix"
+          ]
+        },
+        {
+          "index_key": "employee.html",
+          "schema_version": 0,
+          "attributes": {
+            "acl": null,
+            "arn": "arn:aws:s3:::leave-management-frontend-mjdbklmg/employee.html",
+            "bucket": "leave-management-frontend-mjdbklmg",
+            "bucket_key_enabled": false,
+            "cache_control": "",
+            "checksum_algorithm": null,
+            "checksum_crc32": "",
+            "checksum_crc32c": "",
+            "checksum_crc64nvme": "",
+            "checksum_sha1": "",
+            "checksum_sha256": "",
+            "content": null,
+            "content_base64": null,
+            "content_disposition": "",
+            "content_encoding": "",
+            "content_language": "",
+            "content_type": "text/html",
+            "etag": "dfa495dd73885b45fa025e8f05ed2dee",
+            "force_destroy": false,
+            "id": "employee.html",
+            "key": "employee.html",
+            "kms_key_id": null,
+            "metadata": null,
+            "object_lock_legal_hold_status": "",
+            "object_lock_mode": "",
+            "object_lock_retain_until_date": "",
+            "override_provider": [],
+            "server_side_encryption": "AES256",
+            "source": "../frontend/employee.html",
+            "source_hash": null,
+            "storage_class": "STANDARD",
+            "tags": null,
+            "tags_all": {
+              "Environment": "Dev-School-Project",
+              "ManagedBy": "Terraform",
+              "Project": "GestionDeConges-Serverless"
+            },
+            "version_id": "",
+            "website_redirect": ""
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.frontend",
+            "random_string.bucket_suffix"
+          ]
+        },
+        {
+          "index_key": "index.html",
+          "schema_version": 0,
+          "attributes": {
+            "acl": null,
+            "arn": "arn:aws:s3:::leave-management-frontend-mjdbklmg/index.html",
+            "bucket": "leave-management-frontend-mjdbklmg",
+            "bucket_key_enabled": false,
+            "cache_control": "",
+            "checksum_algorithm": null,
+            "checksum_crc32": "",
+            "checksum_crc32c": "",
+            "checksum_crc64nvme": "",
+            "checksum_sha1": "",
+            "checksum_sha256": "",
+            "content": null,
+            "content_base64": null,
+            "content_disposition": "",
+            "content_encoding": "",
+            "content_language": "",
+            "content_type": "text/html",
+            "etag": "d1dd5fed78c219df2c6db1c4c2ea02c4",
+            "force_destroy": false,
+            "id": "index.html",
+            "key": "index.html",
+            "kms_key_id": null,
+            "metadata": null,
+            "object_lock_legal_hold_status": "",
+            "object_lock_mode": "",
+            "object_lock_retain_until_date": "",
+            "override_provider": [],
+            "server_side_encryption": "AES256",
+            "source": "../frontend/index.html",
+            "source_hash": null,
+            "storage_class": "STANDARD",
+            "tags": null,
+            "tags_all": {
+              "Environment": "Dev-School-Project",
+              "ManagedBy": "Terraform",
+              "Project": "GestionDeConges-Serverless"
+            },
+            "version_id": "",
+            "website_redirect": ""
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.frontend",
+            "random_string.bucket_suffix"
+          ]
+        },
+        {
+          "index_key": "js/admin.js",
+          "schema_version": 0,
+          "attributes": {
+            "acl": null,
+            "arn": "arn:aws:s3:::leave-management-frontend-mjdbklmg/js/admin.js",
+            "bucket": "leave-management-frontend-mjdbklmg",
+            "bucket_key_enabled": false,
+            "cache_control": "",
+            "checksum_algorithm": null,
+            "checksum_crc32": "",
+            "checksum_crc32c": "",
+            "checksum_crc64nvme": "",
+            "checksum_sha1": "",
+            "checksum_sha256": "",
+            "content": null,
+            "content_base64": null,
+            "content_disposition": "",
+            "content_encoding": "",
+            "content_language": "",
+            "content_type": "application/javascript",
+            "etag": "09506da57ddb635dd783fffcdfe47fff",
+            "force_destroy": false,
+            "id": "js/admin.js",
+            "key": "js/admin.js",
+            "kms_key_id": null,
+            "metadata": null,
+            "object_lock_legal_hold_status": "",
+            "object_lock_mode": "",
+            "object_lock_retain_until_date": "",
+            "override_provider": [],
+            "server_side_encryption": "AES256",
+            "source": "../frontend/js/admin.js",
+            "source_hash": null,
+            "storage_class": "STANDARD",
+            "tags": null,
+            "tags_all": {
+              "Environment": "Dev-School-Project",
+              "ManagedBy": "Terraform",
+              "Project": "GestionDeConges-Serverless"
+            },
+            "version_id": "",
+            "website_redirect": ""
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.frontend",
+            "random_string.bucket_suffix"
+          ]
+        },
+        {
+          "index_key": "js/config.js",
+          "schema_version": 0,
+          "attributes": {
+            "acl": null,
+            "arn": "arn:aws:s3:::leave-management-frontend-mjdbklmg/js/config.js",
+            "bucket": "leave-management-frontend-mjdbklmg",
+            "bucket_key_enabled": false,
+            "cache_control": "",
+            "checksum_algorithm": null,
+            "checksum_crc32": "",
+            "checksum_crc32c": "",
+            "checksum_crc64nvme": "",
+            "checksum_sha1": "",
+            "checksum_sha256": "",
+            "content": null,
+            "content_base64": null,
+            "content_disposition": "",
+            "content_encoding": "",
+            "content_language": "",
+            "content_type": "application/javascript",
+            "etag": "774a58b7b27c8497c96a5e746199f1da",
+            "force_destroy": false,
+            "id": "js/config.js",
+            "key": "js/config.js",
+            "kms_key_id": null,
+            "metadata": null,
+            "object_lock_legal_hold_status": "",
+            "object_lock_mode": "",
+            "object_lock_retain_until_date": "",
+            "override_provider": [],
+            "server_side_encryption": "AES256",
+            "source": "../frontend/js/config.js",
+            "source_hash": null,
+            "storage_class": "STANDARD",
+            "tags": null,
+            "tags_all": {
+              "Environment": "Dev-School-Project",
+              "ManagedBy": "Terraform",
+              "Project": "GestionDeConges-Serverless"
+            },
+            "version_id": "",
+            "website_redirect": ""
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.frontend",
+            "random_string.bucket_suffix"
+          ]
+        },
+        {
+          "index_key": "js/employee.js",
+          "schema_version": 0,
+          "attributes": {
+            "acl": null,
+            "arn": "arn:aws:s3:::leave-management-frontend-mjdbklmg/js/employee.js",
+            "bucket": "leave-management-frontend-mjdbklmg",
+            "bucket_key_enabled": false,
+            "cache_control": "",
+            "checksum_algorithm": null,
+            "checksum_crc32": "",
+            "checksum_crc32c": "",
+            "checksum_crc64nvme": "",
+            "checksum_sha1": "",
+            "checksum_sha256": "",
+            "content": null,
+            "content_base64": null,
+            "content_disposition": "",
+            "content_encoding": "",
+            "content_language": "",
+            "content_type": "application/javascript",
+            "etag": "8babd1e1c510937be16486b74faf5575",
+            "force_destroy": false,
+            "id": "js/employee.js",
+            "key": "js/employee.js",
+            "kms_key_id": null,
+            "metadata": null,
+            "object_lock_legal_hold_status": "",
+            "object_lock_mode": "",
+            "object_lock_retain_until_date": "",
+            "override_provider": [],
+            "server_side_encryption": "AES256",
+            "source": "../frontend/js/employee.js",
+            "source_hash": null,
+            "storage_class": "STANDARD",
+            "tags": null,
+            "tags_all": {
+              "Environment": "Dev-School-Project",
+              "ManagedBy": "Terraform",
+              "Project": "GestionDeConges-Serverless"
+            },
+            "version_id": "",
+            "website_redirect": ""
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.frontend",
+            "random_string.bucket_suffix"
+          ]
+        },
+        {
+          "index_key": "js/login.js",
+          "schema_version": 0,
+          "attributes": {
+            "acl": null,
+            "arn": "arn:aws:s3:::leave-management-frontend-mjdbklmg/js/login.js",
+            "bucket": "leave-management-frontend-mjdbklmg",
+            "bucket_key_enabled": false,
+            "cache_control": "",
+            "checksum_algorithm": null,
+            "checksum_crc32": "",
+            "checksum_crc32c": "",
+            "checksum_crc64nvme": "",
+            "checksum_sha1": "",
+            "checksum_sha256": "",
+            "content": null,
+            "content_base64": null,
+            "content_disposition": "",
+            "content_encoding": "",
+            "content_language": "",
+            "content_type": "application/javascript",
+            "etag": "d314e1ecf3a8ca3c53280562d3e8bed4",
+            "force_destroy": false,
+            "id": "js/login.js",
+            "key": "js/login.js",
+            "kms_key_id": null,
+            "metadata": null,
+            "object_lock_legal_hold_status": "",
+            "object_lock_mode": "",
+            "object_lock_retain_until_date": "",
+            "override_provider": [],
+            "server_side_encryption": "AES256",
+            "source": "../frontend/js/login.js",
+            "source_hash": null,
+            "storage_class": "STANDARD",
+            "tags": null,
+            "tags_all": {
+              "Environment": "Dev-School-Project",
+              "ManagedBy": "Terraform",
+              "Project": "GestionDeConges-Serverless"
+            },
+            "version_id": "",
+            "website_redirect": ""
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.frontend",
+            "random_string.bucket_suffix"
+          ]
+        },
+        {
+          "index_key": "js/utils.js",
+          "schema_version": 0,
+          "attributes": {
+            "acl": null,
+            "arn": "arn:aws:s3:::leave-management-frontend-mjdbklmg/js/utils.js",
+            "bucket": "leave-management-frontend-mjdbklmg",
+            "bucket_key_enabled": false,
+            "cache_control": "",
+            "checksum_algorithm": null,
+            "checksum_crc32": "",
+            "checksum_crc32c": "",
+            "checksum_crc64nvme": "",
+            "checksum_sha1": "",
+            "checksum_sha256": "",
+            "content": null,
+            "content_base64": null,
+            "content_disposition": "",
+            "content_encoding": "",
+            "content_language": "",
+            "content_type": "application/javascript",
+            "etag": "0ece32934c790d034e1cd96d9253f56c",
+            "force_destroy": false,
+            "id": "js/utils.js",
+            "key": "js/utils.js",
+            "kms_key_id": null,
+            "metadata": null,
+            "object_lock_legal_hold_status": "",
+            "object_lock_mode": "",
+            "object_lock_retain_until_date": "",
+            "override_provider": [],
+            "server_side_encryption": "AES256",
+            "source": "../frontend/js/utils.js",
+            "source_hash": null,
+            "storage_class": "STANDARD",
+            "tags": null,
+            "tags_all": {
+              "Environment": "Dev-School-Project",
+              "ManagedBy": "Terraform",
+              "Project": "GestionDeConges-Serverless"
+            },
+            "version_id": "",
+            "website_redirect": ""
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.frontend",
+            "random_string.bucket_suffix"
+          ]
+        },
+        {
+          "index_key": "js/validation.js",
+          "schema_version": 0,
+          "attributes": {
+            "acl": null,
+            "arn": "arn:aws:s3:::leave-management-frontend-mjdbklmg/js/validation.js",
+            "bucket": "leave-management-frontend-mjdbklmg",
+            "bucket_key_enabled": false,
+            "cache_control": "",
+            "checksum_algorithm": null,
+            "checksum_crc32": "",
+            "checksum_crc32c": "",
+            "checksum_crc64nvme": "",
+            "checksum_sha1": "",
+            "checksum_sha256": "",
+            "content": null,
+            "content_base64": null,
+            "content_disposition": "",
+            "content_encoding": "",
+            "content_language": "",
+            "content_type": "application/javascript",
+            "etag": "f6e4ba0bf798f327adb67ba04179622b",
+            "force_destroy": false,
+            "id": "js/validation.js",
+            "key": "js/validation.js",
+            "kms_key_id": null,
+            "metadata": null,
+            "object_lock_legal_hold_status": "",
+            "object_lock_mode": "",
+            "object_lock_retain_until_date": "",
+            "override_provider": [],
+            "server_side_encryption": "AES256",
+            "source": "../frontend/js/validation.js",
+            "source_hash": null,
+            "storage_class": "STANDARD",
+            "tags": null,
+            "tags_all": {
+              "Environment": "Dev-School-Project",
+              "ManagedBy": "Terraform",
+              "Project": "GestionDeConges-Serverless"
+            },
+            "version_id": "",
+            "website_redirect": ""
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.frontend",
+            "random_string.bucket_suffix"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "random_string",
+      "name": "bucket_suffix",
+      "provider": "provider[\"registry.terraform.io/hashicorp/random\"]",
+      "instances": [
+        {
+          "schema_version": 2,
+          "attributes": {
+            "id": "mjdbklmg",
+            "keepers": null,
+            "length": 8,
+            "lower": true,
+            "min_lower": 0,
+            "min_numeric": 0,
+            "min_special": 0,
+            "min_upper": 0,
+            "number": true,
+            "numeric": true,
+            "override_special": null,
+            "result": "mjdbklmg",
+            "special": false,
+            "upper": false
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0
+        }
+      ]
+    }
+  ],
+  "check_results": null
+}
