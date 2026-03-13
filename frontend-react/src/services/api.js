@@ -4,7 +4,6 @@ const API_BASE = 'https://1btpbwnf8c.execute-api.us-east-1.amazonaws.com/dev';
 
 const api = axios.create({ baseURL: API_BASE });
 
-// Attach token to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('ld_token');
   if (token) config.headers.Authorization = token;
@@ -21,6 +20,7 @@ export const getMyRequests = () => api.get('/my-requests');
 export const getAllRequests = () => api.get('/requests');
 export const submitRequest = (data) => api.post('/submit', data);
 export const updateStatus = (data) => api.put('/request-status', data);
+export const deleteRequest = (data) => api.delete('/admin/delete-request', { data });
 
 // Admin user management
 export const getUsers = () => api.get('/admin/users');

@@ -2,7 +2,8 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Sun, Moon, Globe, Bell, LogOut, User, LayoutDashboard, FileText, PlusCircle, Users, BarChart3, Settings } from 'lucide-react';
+import { Sun, Moon, Globe, LogOut, LayoutDashboard, FileText, PlusCircle, Users, BarChart3, Settings } from 'lucide-react';
+import NotificationsDropdown from './NotificationsDropdown';
 
 const Navbar = () => {
   const { t, i18n } = useTranslation();
@@ -96,10 +97,7 @@ const Navbar = () => {
           </button>
 
           {/* Notifications */}
-          <button className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative">
-            <Bell size={18} />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
+          <NotificationsDropdown />
 
           {/* User */}
           <div className="flex items-center gap-2 pl-2 border-l border-gray-200 dark:border-gray-700">

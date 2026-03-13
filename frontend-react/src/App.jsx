@@ -9,11 +9,14 @@ import MyRequests from './pages/MyRequests';
 import NewRequest from './pages/NewRequest';
 import AdminDashboard from './pages/AdminDashboard';
 import ManagerDashboard from './pages/ManagerDashboard';
+import UsersPage from './pages/Userspage';
+import AnalyticsPage from './pages/AnalyticsPage';
 import './i18n';
 
 const HomeRedirect = () => {
-  const { user } = useAuth();
-  if (user) return <Navigate to={`/${user.role}`} replace />;
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (user && user.role) return <Navigate to={`/${user.role}`} replace />;
   return <RoleSelect />;
 };
 
@@ -33,21 +36,22 @@ function App() {
             <Route path="/employee/new" element={<ProtectedRoute role="employee"><NewRequest /></ProtectedRoute>} />
 
             {/* Manager */}
-            <Route path="/manager" element={<ProtectedRoute role="manager"><ManagerDashboard /></ProtectedRoute>} />
-            <Route path="/manager/requests" element={<ProtectedRoute role="manager"><ManagerDashboard /></ProtectedRoute>} />
+            <Route path="/manager" element={<ProtectedRoute role="manager"><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/manager/requests" element={<ProtectedRoute role="manager"><AdminDashboard /></ProtectedRoute>} />
             <Route path="/manager/team" element={<ProtectedRoute role="manager"><ManagerDashboard /></ProtectedRoute>} />
+            <Route path="/manager/analytics" element={<ProtectedRoute role="manager"><AnalyticsPage /></ProtectedRoute>} />
 
             {/* HR */}
             <Route path="/hr" element={<ProtectedRoute role="hr"><AdminDashboard /></ProtectedRoute>} />
             <Route path="/hr/requests" element={<ProtectedRoute role="hr"><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/hr/analytics" element={<ProtectedRoute role="hr"><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/hr/users" element={<ProtectedRoute role="hr"><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/hr/analytics" element={<ProtectedRoute role="hr"><AnalyticsPage /></ProtectedRoute>} />
+            <Route path="/hr/users" element={<ProtectedRoute role="hr"><UsersPage /></ProtectedRoute>} />
 
             {/* Admin */}
             <Route path="/admin" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/requests" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/admin/analytics" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/admin/users" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/analytics" element={<ProtectedRoute role="admin"><AnalyticsPage /></ProtectedRoute>} />
+            <Route path="/admin/users" element={<ProtectedRoute role="admin"><UsersPage /></ProtectedRoute>} />
             <Route path="/admin/settings" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
 
             {/* Fallback */}
