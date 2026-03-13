@@ -5,7 +5,7 @@ resource "aws_apigatewayv2_api" "leave_api" {
   
   cors_configuration {
     allow_origins = ["*"]
-    allow_methods = ["GET", "POST", "PUT", "OPTIONS"]
+    allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     allow_headers = ["Content-Type", "Authorization"]  # Added Authorization
   }
 }
@@ -79,4 +79,30 @@ resource "aws_lambda_permission" "api_gw" {
   function_name = aws_lambda_function.leave_api_handler.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.leave_api.execution_arn}/*/*"
+}
+
+# ── Admin User Management Routes ──────────────────────────────────────────────
+
+resource "aws_apigatewayv2_route" "create_user" {
+  api_id    = aws_apigatewayv2_api.leave_api.id
+  route_key = "POST /admin/create-user"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "get_users" {
+  api_id    = aws_apigatewayv2_api.leave_api.id
+  route_key = "GET /admin/users"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "update_user" {
+  api_id    = aws_apigatewayv2_api.leave_api.id
+  route_key = "PUT /admin/update-user"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "delete_user" {
+  api_id    = aws_apigatewayv2_api.leave_api.id
+  route_key = "DELETE /admin/delete-user"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }

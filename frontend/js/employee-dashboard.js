@@ -1,4 +1,4 @@
-const API_BASE = "https://1btpbwnf8c.execute-api.us-east-1.amazonaws.com/dev";
+const API_BASE = "";
 
 const token      = localStorage.getItem("ld_token");
 const employeeId = localStorage.getItem("ld_employee_id");
