@@ -22,22 +22,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # ── Step 2: Install Terraform ─────────────────────────
+      # ── Step 2: Build React frontend ──────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install frontend dependencies
+        working-directory: frontend-react
+        run: npm install
+
+      - name: Build React app
+        working-directory: frontend-react
+        run: npm run build
+
+      # ── Step 3: Install Terraform ─────────────────────────
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.0
 
-      # ── Step 3: Create empty credentials file ─────────────
-      # Terraform needs the file to exist even if empty
-      # because main.tf references it
-      # Real auth comes from AWS_* env vars above
+      # ── Step 4: Create empty credentials file ─────────────
       - name: Create credentials file
         run: |
-          mkdir -p /home/runner/work/leave-request-app/leave-request-app
-          touch /home/runner/work/leave-request-app/leave-request-app/credentials
+          touch credentials
 
-      # ── Step 4: Create terraform.tfvars ───────────────────
+      # ── Step 5: Create terraform.tfvars ───────────────────
       - name: Create terraform.tfvars
         run: |
           cat > terraform/terraform.tfvars << EOF
@@ -46,17 +56,17 @@ jobs:
           alert_email    = "${{ secrets.ALERT_EMAIL }}"
           EOF
 
-      # ── Step 5: Terraform Init ─────────────────────────────
+      # ── Step 6: Terraform Init ─────────────────────────────
       - name: Terraform Init
         working-directory: terraform
         run: terraform init
 
-      # ── Step 6: Terraform Plan ─────────────────────────────
+      # ── Step 7: Terraform Plan ─────────────────────────────
       - name: Terraform Plan
         working-directory: terraform
         run: terraform plan
 
-      # ── Step 7: Terraform Apply ────────────────────────────
+      # ── Step 8: Terraform Apply ────────────────────────────
       - name: Terraform Apply
         working-directory: terraform
         run: terraform apply -auto-approve

@@ -1,4 +1,4 @@
-const API_BASE = "https://1btpbwnf8c.execute-api.us-east-1.amazonaws.com/dev";
+const API_BASE = "";
 
 const adminToken = localStorage.getItem("ld_admin_token");
 if (!adminToken) { window.location.href = "admin-auth.html"; }
