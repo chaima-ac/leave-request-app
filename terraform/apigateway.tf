@@ -106,3 +106,9 @@ resource "aws_apigatewayv2_route" "delete_user" {
   route_key = "DELETE /admin/delete-user"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
+
+resource "aws_apigatewayv2_route" "delete_request" {
+  api_id    = aws_apigatewayv2_api.leave_api.id
+  route_key = "DELETE /admin/delete-request"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}

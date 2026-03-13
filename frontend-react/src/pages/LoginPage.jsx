@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
@@ -18,6 +18,11 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState({ email: '', password: '', name: '', department: '' });
+
+  // Non-employee roles can only login
+  useEffect(() => {
+    if (role !== 'employee') setTab('login');
+  }, [role]);
 
   const toggleLang = () => {
     const newLang = i18n.language === 'en' ? 'fr' : 'en';
@@ -96,8 +101,8 @@ const LoginPage = () => {
             <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 capitalize">{t(role)}</p>
           </div>
 
-          {/* Tabs (not for admin) */}
-          {role !== 'admin' && (
+          {/* Tabs (employee only — manager/hr/admin can only login) */}
+          {role === 'employee' && (
             <div className="flex bg-gray-100 dark:bg-gray-700 rounded-xl p-1 mb-6">
               {['login', 'register'].map(t2 => (
                 <button key={t2} onClick={() => setTab(t2)}

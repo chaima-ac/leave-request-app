@@ -241,6 +241,16 @@ def lambda_handler(event, context):
             employees_table.delete_item(Key={"employee_id": employee_id})
             return respond(200, {"message": "User deleted successfully"})
 
+        # DELETE /admin/delete-request (admin only)
+        elif path.endswith("/admin/delete-request") and method == "DELETE":
+            if not session or session.get("role") != "admin":
+                return respond(401, {"error": "Unauthorized"})
+            request_id = body.get("request_id")
+            if not request_id:
+                return respond(400, {"error": "request_id is required"})
+            requests_table.delete_item(Key={"request_id": request_id})
+            return respond(200, {"message": "Request deleted successfully"})
+
         else:
             return respond(404, {"error": "Route not found"})
 
