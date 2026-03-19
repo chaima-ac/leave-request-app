@@ -163,9 +163,19 @@ def lambda_handler(event, context):
                 return respond(400, {"error": "Status must be approved or rejected"})
             requests_table.update_item(
                 Key={"request_id": request_id},
-                UpdateExpression="SET #s = :s, updated_at = :u, comment = :c, reviewed_by = :r",
-                ExpressionAttributeNames={"#s": "status"},
-                ExpressionAttributeValues={":s": status, ":u": datetime.utcnow().isoformat(), ":c": body.get("comment", ""), ":r": session.get("employee_id", "admin")}
+                UpdateExpression="SET #s = :s, #u = :u, #c = :c, #r = :r",
+                ExpressionAttributeNames={
+                    "#s": "status",
+                    "#u": "updated_at",
+                    "#c": "comment",
+                    "#r": "reviewed_by"
+                },
+                ExpressionAttributeValues={
+                    ":s": status,
+                    ":u": datetime.utcnow().isoformat(),
+                    ":c": body.get("comment", ""),
+                    ":r": session.get("employee_id", "admin")
+                }
             )
             return respond(200, {"message": "Status updated"})
 
@@ -256,4 +266,4 @@ def lambda_handler(event, context):
 
     except Exception as e:
         print("Error:", str(e))
-        return respond(500, {"error": str(e)})# 
+        return respond(500, {"error": str(e)})
