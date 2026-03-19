@@ -256,4 +256,4 @@ def lambda_handler(event, context):
 
     except Exception as e:
         print("Error:", str(e))
-        return respond(500, {"error": str(e)})
+        return respond(500, {"error": str(e)})# 
