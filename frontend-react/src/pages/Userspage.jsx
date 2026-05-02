@@ -5,8 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import { UserPlus, Pencil, Trash2, X, Check } from 'lucide-react';
 
-const ROLES = ['employee', 'manager', 'hr', 'admin'];
-const DEPARTMENTS = ['Engineering', 'HR', 'Finance', 'Marketing', 'Operations', 'IT'];
+const ROLES = ['employee', 'manager', 'hr'];
+const DEPARTMENTS = ['Engineering', 'Finance', 'Marketing', 'Operations', 'IT'];
 
 const roleColors = {
   admin:    'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
@@ -21,6 +21,8 @@ const UsersPage = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const isHR    = user?.role === 'hr';
+  const canManage = isAdmin || isHR;
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -71,10 +73,11 @@ const UsersPage = () => {
     setError('');
     try {
       if (editingUser) {
-        await updateUser({ employee_id: editingUser.employee_id, ...form });
+        const payload = { ...form, department: form.role === 'hr' ? '' : form.department };
+      await updateUser({ employee_id: editingUser.employee_id, ...payload });
         setSuccess('User updated successfully!');
       } else {
-        await createUser(form);
+        await createUser({ ...form, department: form.role === 'hr' ? '' : form.department });
         setSuccess('User created successfully!');
       }
       setShowModal(false);
@@ -116,7 +119,7 @@ const UsersPage = () => {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('users')}</h1>
             <p className="text-gray-500 dark:text-gray-400 mt-1">{users.length} total users</p>
           </div>
-          {isAdmin && (
+          {canManage && (
             <button onClick={openCreate}
               className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium transition-colors">
               <UserPlus size={18} />
@@ -185,13 +188,13 @@ const UsersPage = () => {
                     {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
                   </td>
                   <td className="px-4 py-3">
-                    {isAdmin && (
+                    {canManage && (
                     <div className="flex items-center gap-2">
                       <button onClick={() => openEdit(user)}
                         className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors">
                         <Pencil size={15} />
                       </button>
-                      {deleteConfirm === user.employee_id ? (
+                      {isAdmin && deleteConfirm === user.employee_id ? (
                         <div className="flex items-center gap-1">
                           <button onClick={() => handleDelete(user.employee_id)}
                             className="p-1.5 text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
@@ -202,12 +205,12 @@ const UsersPage = () => {
                             <X size={15} />
                           </button>
                         </div>
-                      ) : (
+                      ) : isAdmin ? (
                         <button onClick={() => setDeleteConfirm(user.employee_id)}
                           className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
                           <Trash2 size={15} />
                         </button>
-                      )}
+                      ) : null}
                     </div>
                     )}
                   </td>
@@ -267,12 +270,13 @@ const UsersPage = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role *</label>
-                  <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}
+                  <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value, department: e.target.value === 'hr' ? '' : form.department })}
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     {ROLES.map(r => <option key={r} value={r}>{t(r)}</option>)}
                   </select>
                 </div>
 
+                {form.role !== 'hr' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('department')}</label>
                   <select value={form.department} onChange={e => setForm({ ...form, department: e.target.value })}
@@ -281,6 +285,7 @@ const UsersPage = () => {
                     {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('position')}</label>

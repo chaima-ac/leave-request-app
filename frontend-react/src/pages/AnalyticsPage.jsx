@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { getAllRequests } from '../services/api';
+import { getAllRequests, getUsers } from '../services/api';
 import Navbar from '../components/Navbar';
 import StatCard from '../components/StatCard';
 import { FileText, CheckCircle, XCircle, Clock, TrendingUp } from 'lucide-react';
@@ -10,18 +11,53 @@ import {
 } from 'recharts';
 
 const COLORS = ['#6366f1', '#22c55e', '#ef4444', '#f59e0b', '#06b6d4', '#ec4899'];
+const CustomTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 shadow-lg text-sm">
+      {label && <p className="text-gray-500 dark:text-gray-400 mb-1 text-xs">{label}</p>}
+      {payload.map((p, i) => (
+        <p key={i} className="font-semibold text-gray-900 dark:text-white">
+          {p.name}: {p.value}
+        </p>
+      ))}
+    </div>
+  );
+};
+
+
 
 const AnalyticsPage = () => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getAllRequests().then(res => {
-      setRequests(res.data.requests || []);
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  }, []);
+    const isManager = user?.role === 'manager';
+    const dept = (user?.department || '').toLowerCase();
+
+    if (isManager && dept) {
+      // Fetch users to get department employee IDs, then filter requests
+      Promise.all([getUsers(), getAllRequests()])
+        .then(([usersRes, reqRes]) => {
+          const allUsers    = usersRes.data.users    || [];
+          const allRequests = reqRes.data.requests   || [];
+          const deptIds = new Set(
+            allUsers
+              .filter(u => (u.department || '').toLowerCase() === dept && u.role === 'employee')
+              .map(u => u.employee_id)
+          );
+          setRequests(allRequests.filter(r => deptIds.has(r.employee_id)));
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    } else {
+      getAllRequests()
+        .then(res => { setRequests(res.data.requests || []); setLoading(false); })
+        .catch(() => setLoading(false));
+    }
+  }, [user?.role, user?.department]);
 
   const normalize = (s) => s?.toLowerCase() || '';
 
@@ -103,7 +139,7 @@ const AnalyticsPage = () => {
 
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('analytics')}</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Full overview of all leave requests</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">{user?.role === 'manager' && user?.department ? `${user.department} department analytics` : 'Full overview of all leave requests'}</p>
         </div>
 
         {/* Stats */}
@@ -125,27 +161,60 @@ const AnalyticsPage = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis dataKey="month" stroke="#9ca3af" tick={{ fontSize: 12 }} />
                 <YAxis stroke="#9ca3af" tick={{ fontSize: 12 }} />
-                <Tooltip />
+                <Tooltip content={<CustomTooltip />} />
                 <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} name="Requests" />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          {/* Status breakdown pie */}
+          {/* Status breakdown — donut + legend */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Status Breakdown</h3>
             {statusData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie data={statusData} cx="50%" cy="50%" outerRadius={85} dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-                    {statusData.map((_, i) => (
-                      <Cell key={i} fill={['#22c55e', '#f59e0b', '#ef4444'][i]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+              <div className="flex items-center gap-6">
+                <ResponsiveContainer width={180} height={180}>
+                  <PieChart>
+                    <Pie data={statusData} cx="50%" cy="50%"
+                      innerRadius={52} outerRadius={80}
+                      dataKey="value" startAngle={90} endAngle={-270}>
+                      {statusData.map((entry, i) => {
+                        const colorMap = {
+                          [t('approved')]: '#22c55e',
+                          [t('pending')]:  '#f59e0b',
+                          [t('rejected')]: '#ef4444',
+                        };
+                        return <Cell key={i} fill={colorMap[entry.name] || COLORS[i]} strokeWidth={0} />;
+                      })}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="flex flex-col gap-3 flex-1">
+                  {statusData.map((entry) => {
+                    const colorMap = {
+                      [t('approved')]: { dot: 'bg-green-500',  text: 'text-green-600 dark:text-green-400' },
+                      [t('pending')]:  { dot: 'bg-amber-400',  text: 'text-amber-600 dark:text-amber-400' },
+                      [t('rejected')]: { dot: 'bg-red-500',    text: 'text-red-600 dark:text-red-400' },
+                    };
+                    const c = colorMap[entry.name] || { dot: 'bg-indigo-500', text: 'text-indigo-600' };
+                    const pct = stats.total > 0 ? Math.round((entry.value / stats.total) * 100) : 0;
+                    return (
+                      <div key={entry.name}>
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${c.dot}`} />
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{entry.name}</span>
+                          </div>
+                          <span className={`text-sm font-bold ${c.text}`}>{entry.value} · {pct}%</span>
+                        </div>
+                        <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5">
+                          <div className={`${c.dot} h-1.5 rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             ) : (
               <div className="h-48 flex items-center justify-center text-gray-400">{t('noRequests')}</div>
             )}
@@ -163,7 +232,7 @@ const AnalyticsPage = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis type="number" stroke="#9ca3af" tick={{ fontSize: 12 }} />
                   <YAxis dataKey="name" type="category" stroke="#9ca3af" tick={{ fontSize: 12 }} width={90} />
-                  <Tooltip />
+                  <Tooltip content={<CustomTooltip />} />
                   <Bar dataKey="value" radius={[0, 4, 4, 0]} name="Requests">
                     {typeData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Bar>
@@ -174,8 +243,8 @@ const AnalyticsPage = () => {
             )}
           </div>
 
-          {/* By department */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+          {/* By department — hidden for managers (they only see their own dept) */}
+          {user?.role !== 'manager' && <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('requestsByDepartment')}</h3>
             {deptData.length > 0 ? (
               <ResponsiveContainer width="100%" height={220}>
@@ -183,7 +252,7 @@ const AnalyticsPage = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="name" stroke="#9ca3af" tick={{ fontSize: 11 }} />
                   <YAxis stroke="#9ca3af" tick={{ fontSize: 12 }} />
-                  <Tooltip />
+                  <Tooltip content={<CustomTooltip />} />
                   <Bar dataKey="value" radius={[4, 4, 0, 0]} name="Requests">
                     {deptData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Bar>
@@ -192,7 +261,7 @@ const AnalyticsPage = () => {
             ) : (
               <div className="h-48 flex items-center justify-center text-gray-400">{t('noRequests')}</div>
             )}
-          </div>
+          </div>}
         </div>
 
         {/* Top employees */}

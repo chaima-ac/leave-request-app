@@ -1,33 +1,27 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { login as loginApi, adminLogin, register as registerApi } from '../services/api';
-import { Sun, Moon, Globe, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { login as loginApi, adminLogin } from '../services/api';
+import { Sun, Moon, Globe, Eye, EyeOff, Shield, ArrowRight, Layers } from 'lucide-react';
 
 const LoginPage = () => {
-  const { role } = useParams();
   const { t, i18n } = useTranslation();
   const { login } = useAuth();
   const { dark, setDark } = useTheme();
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState('login');
-  const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [form, setForm] = useState({ email: '', password: '', name: '', department: '' });
-
-  // Non-employee roles can only login
-  useEffect(() => {
-    if (role !== 'employee') setTab('login');
-  }, [role]);
+  const [adminMode, setAdminMode] = useState(false);
+  const [showPass, setShowPass]   = useState(false);
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState('');
+  const [form, setForm]           = useState({ email: '', password: '' });
 
   const toggleLang = () => {
-    const newLang = i18n.language === 'en' ? 'fr' : 'en';
-    i18n.changeLanguage(newLang);
-    localStorage.setItem('language', newLang);
+    const nl = i18n.language === 'en' ? 'fr' : 'en';
+    i18n.changeLanguage(nl);
+    localStorage.setItem('language', nl);
   };
 
   const handleSubmit = async (e) => {
@@ -35,31 +29,22 @@ const LoginPage = () => {
     setLoading(true);
     setError('');
     try {
-      let res;
-      if (role === 'admin') {
-        res = await adminLogin({ password: form.password });
-        login({ token: res.data.token, role: 'admin', name: 'Admin', email: 'admin', employeeId: 'admin' });
+      if (adminMode) {
+        const res = await adminLogin({ password: form.password });
+        login({ token: res.data.token, role: 'admin', name: 'Admin', email: 'admin', employeeId: 'admin', department: '' });
         navigate('/admin');
-      } else if (tab === 'login') {
-        res = await loginApi({ email: form.email, password: form.password });
-        login({
-          token: res.data.token,
-          role: res.data.role || role,
-          name: res.data.name,
-          email: form.email,
-          employeeId: res.data.employee_id,
-        });
-        navigate(`/${res.data.role || role}`);
       } else {
-        res = await registerApi({ email: form.email, password: form.password, name: form.name, department: form.department, role });
+        const res = await loginApi({ email: form.email, password: form.password });
+        const d = res.data;
         login({
-          token: res.data.token,
-          role,
-          name: form.name,
-          email: form.email,
-          employeeId: res.data.employee_id,
+          token:      d.token,
+          role:       d.role,
+          name:       d.name,
+          email:      form.email,
+          employeeId: d.employee_id,
+          department: d.department || '',
         });
-        navigate(`/${role}`);
+        navigate(`/${d.role}`);
       }
     } catch (err) {
       setError(err.response?.data?.message || t('error'));
@@ -67,106 +52,130 @@ const LoginPage = () => {
     setLoading(false);
   };
 
-  const roleEmoji = { employee: '👤', manager: '👔', hr: '🏢', admin: '⚙️' };
+  const isFr = i18n.language === 'fr';
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
-      {/* Top bar */}
-      <div className="flex justify-between items-center p-4">
-        <button onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-          <ArrowLeft size={18} />
-          <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">🏢 LeaveDesk</span>
-        </button>
-        <div className="flex gap-2">
-          <button onClick={toggleLang}
-            className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
-            <Globe size={16} /> {i18n.language.toUpperCase()}
-          </button>
-          <button onClick={() => setDark(!dark)}
-            className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
-            {dark ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+    <div className="min-h-screen flex" style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+      {/* Left branding panel */}
+      <div className="hidden lg:flex lg:w-1/2 bg-slate-900 flex-col justify-between p-12 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10"
+          style={{ backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)', backgroundSize: '40px 40px' }} />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full opacity-20"
+          style={{ background: 'radial-gradient(circle, #6366f1 0%, transparent 70%)', filter: 'blur(40px)' }} />
+
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="w-9 h-9 bg-indigo-500 rounded-lg flex items-center justify-center">
+            <Layers size={18} className="text-white" />
+          </div>
+          <span className="text-white font-semibold text-lg tracking-tight">LeaveDesk</span>
         </div>
+
+        <div className="relative z-10">
+          <h2 className="text-4xl font-bold text-white leading-tight mb-4">
+            {isFr ? 'Gérez les congés\nsans friction.' : 'Manage leave\nwithout friction.'}
+          </h2>
+          <p className="text-slate-400 text-base leading-relaxed">
+            {isFr
+              ? 'Une plateforme unifiée pour les demandes, validations et analytics.'
+              : 'One unified platform for requests, approvals, and analytics.'}
+          </p>
+          <div className="mt-10 flex flex-col gap-3">
+            {[
+              { icon: '⚡', text: isFr ? 'Approbations en un clic' : 'One-click approvals' },
+              { icon: '📊', text: isFr ? 'Analytics en temps réel' : 'Real-time analytics' },
+              { icon: '🌍', text: isFr ? 'Français & anglais' : 'French & English support' },
+            ].map(f => (
+              <div key={f.text} className="flex items-center gap-3">
+                <span className="text-lg">{f.icon}</span>
+                <span className="text-slate-300 text-sm">{f.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="relative z-10 text-slate-600 text-xs">© {new Date().getFullYear()} LeaveDesk</div>
       </div>
 
-      {/* Card */}
-      <div className="flex-1 flex items-center justify-center px-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 w-full max-w-md p-8">
-          <div className="text-center mb-6">
-            <div className="text-5xl mb-3">{roleEmoji[role]}</div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white capitalize">
-              {tab === 'login' ? t('welcomeBack') : t('createAccount')}
-            </h2>
-            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 capitalize">{t(role)}</p>
+      {/* Right form panel */}
+      <div className="flex-1 flex flex-col bg-white dark:bg-slate-950">
+        <div className="flex justify-between items-center px-6 py-5">
+          <div className="lg:hidden flex items-center gap-2">
+            <div className="w-7 h-7 bg-indigo-600 rounded-md flex items-center justify-center">
+              <Layers size={14} className="text-white" />
+            </div>
+            <span className="font-semibold text-slate-900 dark:text-white text-sm">LeaveDesk</span>
           </div>
-
-          {/* Tabs (employee only — manager/hr/admin can only login) */}
-          {role === 'employee' && (
-            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-xl p-1 mb-6">
-              {['login', 'register'].map(t2 => (
-                <button key={t2} onClick={() => setTab(t2)}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors
-                    ${tab === t2 ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}>
-                  {t2 === 'login' ? t('login') : t('register')}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg px-4 py-3 text-sm mb-4">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {tab === 'register' && role !== 'admin' && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('fullName')}</label>
-                  <input type="text" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('department')}</label>
-                  <select value={form.department} onChange={e => setForm({ ...form, department: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
-                    <option value="">Select...</option>
-                    {['Engineering', 'HR', 'Finance', 'Marketing', 'Operations', 'IT'].map(d => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
-                </div>
-              </>
-            )}
-
-            {role !== 'admin' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('email')}</label>
-                <input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('password')}</label>
-              <div className="relative">
-                <input type={showPass ? 'text' : 'password'} required value={form.password}
-                  onChange={e => setForm({ ...form, password: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition pr-10" />
-                <button type="button" onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-
-            <button type="submit" disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold py-2.5 rounded-xl transition-colors mt-2">
-              {loading ? t('loading') : (tab === 'login' ? t('login') : t('register'))}
+          <div className="hidden lg:block" />
+          <div className="flex gap-1 items-center">
+            <button onClick={toggleLang}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+              <Globe size={13} /> {i18n.language.toUpperCase()}
             </button>
-          </form>
+            <button onClick={() => setDark(!dark)}
+              className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+              {dark ? <Sun size={15} /> : <Moon size={15} />}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center px-6 py-8">
+          <div className="w-full max-w-sm">
+            <div className="mb-8">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
+                {adminMode ? (isFr ? 'Accès administrateur' : 'Admin access') : (isFr ? 'Bon retour' : 'Welcome back')}
+              </h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {adminMode
+                  ? (isFr ? 'Entrez le mot de passe admin' : 'Enter the admin password')
+                  : (isFr ? 'Connectez-vous à votre espace de travail' : 'Sign in to your workspace')}
+              </p>
+            </div>
+
+            {error && (
+              <div className="mb-5 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-400 text-sm">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {!adminMode && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">{t('email')}</label>
+                  <input type="email" required value={form.email}
+                    onChange={e => setForm({ ...form, email: e.target.value })}
+                    placeholder={isFr ? 'vous@entreprise.com' : 'you@company.com'}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition text-sm" />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">{t('password')}</label>
+                <div className="relative">
+                  <input type={showPass ? 'text' : 'password'} required value={form.password}
+                    onChange={e => setForm({ ...form, password: e.target.value })}
+                    className="w-full px-4 py-3 pr-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition text-sm" />
+                  <button type="button" onClick={() => setShowPass(!showPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                    {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+              </div>
+
+              <button type="submit" disabled={loading}
+                className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors text-sm mt-2">
+                {loading
+                  ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  : <>{isFr ? 'Se connecter' : 'Sign in'} <ArrowRight size={15} /></>}
+              </button>
+            </form>
+
+            <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
+              <button onClick={() => { setAdminMode(!adminMode); setError(''); setForm({ email: '', password: '' }); }}
+                className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium transition-colors text-slate-400 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900">
+                <Shield size={12} />
+                {adminMode ? (isFr ? '← Connexion standard' : '← Standard login') : (isFr ? 'Accès administrateur' : 'Admin access')}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

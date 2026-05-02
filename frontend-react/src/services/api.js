@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = 'https://1btpbwnf8c.execute-api.us-east-1.amazonaws.com/dev';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://1btpbwnf8c.execute-api.us-east-1.amazonaws.com/dev';
 
 const api = axios.create({ baseURL: API_BASE });
 

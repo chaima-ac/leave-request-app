@@ -206,11 +206,16 @@ def lambda_handler(event, context):
 
         # GET /admin/users
         elif path.endswith("/admin/users") and method == "GET":
-            if not is_admin_or_hr(session):
+            if not is_privileged(session):
                 return respond(401, {"error": "Unauthorized"})
             users = employees_table.scan().get("Items", [])
             for u in users:
                 u.pop("password_hash", None)
+            # Managers only see their own department
+            if session.get("role") == "manager":
+                manager = get_employee(session["employee_id"])
+                dept = (manager.get("department", "") if manager else "").lower()
+                users = [u for u in users if (u.get("department", "") or "").lower() == dept]
             return respond(200, {"users": users})
 
         # PUT /admin/update-user
