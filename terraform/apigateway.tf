@@ -112,3 +112,14 @@ resource "aws_apigatewayv2_route" "delete_request" {
   route_key = "DELETE /admin/delete-request"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
+resource "aws_apigatewayv2_route" "get_leave_policy" {
+  api_id    = aws_apigatewayv2_api.leave_api.id
+  route_key = "GET /leave-policy"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "put_leave_policy" {
+  api_id    = aws_apigatewayv2_api.leave_api.id
+  route_key = "PUT /leave-policy"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}

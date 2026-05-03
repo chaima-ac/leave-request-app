@@ -29,3 +29,7 @@ export const updateUser = (data) => api.put('/admin/update-user', data);
 export const deleteUser = (data) => api.delete('/admin/delete-user', { data });
 
 export default api;
+
+// Leave policy
+export const getLeavePolicy = () => api.get('/leave-policy');
+export const updateLeavePolicy = (data) => api.put('/leave-policy', data);

@@ -7,6 +7,7 @@ import EmployeeDashboard from './pages/EmployeeDashboard';
 import MyRequests from './pages/MyRequests';
 import NewRequest from './pages/NewRequest';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminSettings from './pages/AdminSettings';
 import HRDashboard from './pages/HRDashboard';
 import AdminRequests from './pages/AdminRequests';
 import ManagerDashboard from './pages/ManagerDashboard';
@@ -55,6 +56,8 @@ function App() {
             <Route path="/admin/requests" element={<ProtectedRoute role="admin"><AdminRequests /></ProtectedRoute>} />
             <Route path="/admin/analytics" element={<ProtectedRoute role="admin"><AnalyticsPage /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute role="admin"><UsersPage /></ProtectedRoute>} />
+
+            <Route path="/admin/settings" element={<ProtectedRoute role="admin"><AdminSettings /></ProtectedRoute>} />
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />

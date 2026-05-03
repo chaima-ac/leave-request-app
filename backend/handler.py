@@ -11,10 +11,20 @@ dynamodb = boto3.resource('dynamodb')
 requests_table  = dynamodb.Table(os.environ.get('DYNAMODB_TABLE',  'LeaveRequests'))
 employees_table = dynamodb.Table(os.environ.get('EMPLOYEES_TABLE', 'Employees'))
 sessions_table  = dynamodb.Table(os.environ.get('SESSIONS_TABLE',  'Sessions'))
+policies_table  = dynamodb.Table(os.environ.get('POLICIES_TABLE',  'LeavePolicies'))
 
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin123')
 PASSWORD_SALT  = os.environ.get('PASSWORD_SALT',  'leavedesk_default_salt')
 VALID_ROLES    = ['employee', 'manager', 'hr', 'admin']
+
+DEFAULT_POLICY = {
+    "vacation":  30,
+    "sick":      10,
+    "remote":    60,
+    "personal":  5,
+    "maternity": 90,
+    "paternity": 15,
+}
 
 HEADERS = {
     "Access-Control-Allow-Origin":  "*",
@@ -82,7 +92,7 @@ def lambda_handler(event, context):
     session = resolve_session(token) if token else None
 
     try:
-        # POST /register — employee self-registration
+        # POST /register
         if path.endswith("/register") and method == "POST":
             name, email, password = (body.get("name") or "").strip(), (body.get("email") or "").strip().lower(), body.get("password") or ""
             department = (body.get("department") or "").strip()
@@ -164,12 +174,7 @@ def lambda_handler(event, context):
             requests_table.update_item(
                 Key={"request_id": request_id},
                 UpdateExpression="SET #s = :s, #u = :u, #c = :c, #r = :r",
-                ExpressionAttributeNames={
-                    "#s": "status",
-                    "#u": "updated_at",
-                    "#c": "comment",
-                    "#r": "reviewed_by"
-                },
+                ExpressionAttributeNames={"#s": "status", "#u": "updated_at", "#c": "comment", "#r": "reviewed_by"},
                 ExpressionAttributeValues={
                     ":s": status,
                     ":u": datetime.utcnow().isoformat(),
@@ -179,14 +184,48 @@ def lambda_handler(event, context):
             )
             return respond(200, {"message": "Status updated"})
 
+        # GET /leave-policy — any authenticated user
+        elif path.endswith("/leave-policy") and method == "GET":
+            if not session:
+                return respond(401, {"error": "Unauthorized"})
+            result = policies_table.get_item(Key={"policy_key": "default"})
+            policy = result.get("Item", {}).get("quotas", DEFAULT_POLICY)
+            return respond(200, {"policy": policy})
+
+        # PUT /leave-policy — admin only
+        elif path.endswith("/leave-policy") and method == "PUT":
+            if not session or session.get("role") != "admin":
+                return respond(401, {"error": "Unauthorized"})
+            quotas = body.get("quotas")
+            if not quotas or not isinstance(quotas, dict):
+                return respond(400, {"error": "quotas object is required"})
+            sanitized = {}
+            for k, v in quotas.items():
+                try:
+                    n = int(float(str(v)))
+                    if n < 0:
+                        return respond(400, {"error": f"Invalid quota for {k}"})
+                    sanitized[k] = n
+                except (ValueError, TypeError):
+                    return respond(400, {"error": f"Invalid quota for {k}"})
+            policies_table.put_item(Item={
+                "policy_key": "default",
+                "quotas": sanitized,
+                "updated_at": datetime.utcnow().isoformat(),
+                "updated_by": session.get("employee_id", "admin")
+            })
+            return respond(200, {"message": "Policy updated", "quotas": sanitized})
+
         # POST /admin/create-user
         elif path.endswith("/admin/create-user") and method == "POST":
-            if not session or session.get("role") != "admin":
+            if not session or session.get("role") not in ("admin", "hr"):
                 return respond(401, {"error": "Unauthorized"})
             name, email, password = (body.get("name") or "").strip(), (body.get("email") or "").strip().lower(), body.get("password") or ""
             role = (body.get("role") or "employee").lower()
             if not name or not email or not password:
                 return respond(400, {"error": "Name, email and password are required."})
+            if role == "admin":
+                return respond(400, {"error": "Cannot create additional admin accounts."})
             if role not in VALID_ROLES:
                 return respond(400, {"error": f"Role must be one of: {', '.join(VALID_ROLES)}"})
             if len(password) < 6:
@@ -211,7 +250,6 @@ def lambda_handler(event, context):
             users = employees_table.scan().get("Items", [])
             for u in users:
                 u.pop("password_hash", None)
-            # Managers only see their own department
             if session.get("role") == "manager":
                 manager = get_employee(session["employee_id"])
                 dept = (manager.get("department", "") if manager else "").lower()
@@ -220,12 +258,14 @@ def lambda_handler(event, context):
 
         # PUT /admin/update-user
         elif path.endswith("/admin/update-user") and method == "PUT":
-            if not session or session.get("role") != "admin":
+            if not session or session.get("role") not in ("admin", "hr"):
                 return respond(401, {"error": "Unauthorized"})
             employee_id = body.get("employee_id")
             if not employee_id:
                 return respond(400, {"error": "employee_id is required"})
             update_fields = {k: body[k] for k in ["name", "role", "department", "position", "phone"] if k in body}
+            if "role" in update_fields and update_fields["role"] == "admin":
+                return respond(400, {"error": "Cannot assign admin role."})
             if body.get("password"):
                 update_fields["password_hash"] = hash_password(body["password"])
             if not update_fields:
@@ -256,7 +296,7 @@ def lambda_handler(event, context):
             employees_table.delete_item(Key={"employee_id": employee_id})
             return respond(200, {"message": "User deleted successfully"})
 
-        # DELETE /admin/delete-request (admin only)
+        # DELETE /admin/delete-request
         elif path.endswith("/admin/delete-request") and method == "DELETE":
             if not session or session.get("role") != "admin":
                 return respond(401, {"error": "Unauthorized"})

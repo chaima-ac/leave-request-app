@@ -5,7 +5,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Sun, Moon, Globe, LogOut, LayoutDashboard, FileText,
-  PlusCircle, Users, BarChart3, Menu, X, Layers,
+  PlusCircle, Users, BarChart3, Menu, X, Layers, Settings,
 } from 'lucide-react';
 import NotificationsDropdown from './NotificationsDropdown';
 
@@ -48,6 +48,7 @@ const Navbar = () => {
       { path: '/admin/requests',  icon: <FileText size={16} />,        label: t('allRequests') },
       { path: '/admin/analytics', icon: <BarChart3 size={16} />,       label: t('analytics') },
       { path: '/admin/users',     icon: <Users size={16} />,           label: t('users') },
+      { path: '/admin/settings',  icon: <Settings size={16} />,        label: t('settings') },
     ],
   };
 

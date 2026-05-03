@@ -53,12 +53,13 @@ const HRDashboard = () => {
     normalize(r.status) === 'approved' && r.start_date <= today && r.end_date >= today
   );
 
-  // Leave balance by department
+  // Leave balance by department — filter by employee_id to handle old requests with empty department
   const depts = [...new Set(users.filter(u => u.role === 'employee' && u.department).map(u => u.department))].sort();
 
   const deptBalances = depts.map(dept => {
     const deptEmployees = users.filter(u => u.role === 'employee' && u.department === dept);
-    const deptRequests  = requests.filter(r => normalize(r.status) === 'approved' && r.department === dept);
+    const deptIds = new Set(deptEmployees.map(u => u.employee_id));
+    const deptRequests  = requests.filter(r => normalize(r.status) === 'approved' && deptIds.has(r.employee_id));
 
     const totalDaysTaken = deptRequests.reduce((acc, r) => {
       if (!r.start_date || !r.end_date) return acc + 1;
