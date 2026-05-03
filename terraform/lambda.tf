@@ -6,8 +6,7 @@ resource "null_resource" "install_dependencies" {
   }
 
   provisioner "local-exec" {
-    command     = "pip install -r ${path.module}/../backend/requirements.txt -t ${path.module}/../backend/package --upgrade --no-user --platform manylinux2014_x86_64 --only-binary=:all: --python-version 3.11"
-    interpreter = ["cmd", "/C"]
+    command = "pip install -r ${path.module}/../backend/requirements.txt -t ${path.module}/../backend/package --upgrade --no-user --platform manylinux2014_x86_64 --only-binary=:all: --python-version 3.11"
   }
 }
 
@@ -20,8 +19,7 @@ resource "null_resource" "copy_handler" {
   }
 
   provisioner "local-exec" {
-    command     = "copy ${path.module}\\..\\backend\\handler.py ${path.module}\\..\\backend\\package\\handler.py"
-    interpreter = ["cmd", "/C"]
+    command = "cp ${path.module}/../backend/handler.py ${path.module}/../backend/package/handler.py"
   }
 }
 
