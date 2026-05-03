@@ -1,9 +1,41 @@
-.terraform/ 
-terraform/.terraform/ 
-terraform/.terraform.lock.hcl 
-credentials 
-terraform/terraform.tfvars 
-terraform/terraform.tfstate 
-terraform/terraform.tfstate.backup 
-"terraform/terraform.tfstate.*.backup" 
-terraform/lambda_function.zip 
+# Terraform
+.terraform/
+terraform/.terraform/
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+terraform.tfvars
+terraform/.terraform.lock.hcl
+
+# Credentials & secrets
+credentials
+.env
+.env.local
+*.pem
+*.key
+
+# Lambda build artifacts
+terraform/lambda_function.zip
+*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Node / Frontend
+node_modules/
+dist/
+.cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
