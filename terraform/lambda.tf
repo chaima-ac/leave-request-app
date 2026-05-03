@@ -19,6 +19,7 @@ resource "aws_lambda_function" "leave_api_handler" {
     variables = {
       DYNAMODB_TABLE  = aws_dynamodb_table.leave_requests.name
       EMPLOYEES_TABLE = aws_dynamodb_table.employees.name
+      POLICIES_TABLE = aws_dynamodb_table.leave_policies.name
       SESSIONS_TABLE  = aws_dynamodb_table.sessions.name
       ADMIN_PASSWORD  = var.admin_password
       PASSWORD_SALT   = var.password_salt
