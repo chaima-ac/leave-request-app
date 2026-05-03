@@ -2,8 +2,8 @@ import json
 import boto3
 import uuid
 import os
-import hashlib
 import secrets
+import bcrypt
 from datetime import datetime, timedelta
 from boto3.dynamodb.conditions import Key
 
@@ -14,7 +14,6 @@ sessions_table  = dynamodb.Table(os.environ.get('SESSIONS_TABLE',  'Sessions'))
 policies_table  = dynamodb.Table(os.environ.get('POLICIES_TABLE',  'LeavePolicies'))
 
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin123')
-PASSWORD_SALT  = os.environ.get('PASSWORD_SALT',  'leavedesk_default_salt')
 VALID_ROLES    = ['employee', 'manager', 'hr', 'admin']
 
 DEFAULT_POLICY = {
@@ -36,7 +35,15 @@ def respond(status, body):
     return {"statusCode": status, "headers": HEADERS, "body": json.dumps(body, default=str)}
 
 def hash_password(password):
-    return hashlib.sha256(f"{PASSWORD_SALT}{password}".encode()).hexdigest()
+    """Hash a password using bcrypt with auto-generated salt."""
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+def verify_password(password, stored_hash):
+    """Verify a password against a bcrypt hash."""
+    try:
+        return bcrypt.checkpw(password.encode(), stored_hash.encode())
+    except Exception:
+        return False
 
 def create_session(employee_id, role, days=30):
     token      = secrets.token_hex(32)
@@ -117,7 +124,7 @@ def lambda_handler(event, context):
             if not email or not password:
                 return respond(400, {"error": "Email and password are required."})
             items = employees_table.query(IndexName="email-index", KeyConditionExpression=Key("email").eq(email)).get("Items", [])
-            if not items or items[0].get("password_hash") != hash_password(password):
+            if not items or not verify_password(password, items[0].get("password_hash", "")):
                 return respond(401, {"error": "Invalid email or password."})
             emp = items[0]
             role = emp.get("role", "employee")

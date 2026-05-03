@@ -16,20 +16,8 @@ variable "environment" {
   default     = "Dev-School-Project"
 }
 
-variable "credentials_file" {
-  description = "Path to AWS credentials file"
-  type        = string
-  default     = "C:\\Users\\USER\\OneDrive - Ministere de l'Enseignement Superieur et de la Recherche Scientifique\\Bureau\\pfa\\leave-request-app\\credentials"
-}
-
 variable "admin_password" {
   description = "Password for the admin dashboard login"
-  type        = string
-  sensitive   = true
-}
-
-variable "password_salt" {
-  description = "Secret salt used when hashing employee passwords"
   type        = string
   sensitive   = true
 }
