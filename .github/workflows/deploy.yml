@@ -37,6 +37,11 @@ jobs:
         run: npm run build
 
       # ── Step 3: Install Terraform ─────────────────────────
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
@@ -52,7 +57,6 @@ jobs:
         run: |
           cat > terraform/terraform.tfvars << EOF
           admin_password = "${{ secrets.ADMIN_PASSWORD }}"
-          password_salt  = "${{ secrets.PASSWORD_SALT }}"
           alert_email    = "${{ secrets.ALERT_EMAIL }}"
           EOF
 

@@ -18,9 +18,13 @@ resource "null_resource" "copy_handler" {
     handler = filemd5("${path.module}/../backend/handler.py")
   }
 
+  # Portable copy (Linux CI + Windows/macOS with Python on PATH — same as pip below)
   provisioner "local-exec" {
-    interpreter = ["PowerShell", "-Command"]
-    command     = "Copy-Item -Path '${path.module}/../backend/handler.py' -Destination '${path.module}/../backend/package/handler.py' -Force"
+    command = format(
+      "python -c \"import shutil, pathlib; shutil.copyfile(pathlib.Path(%s), pathlib.Path(%s))\"",
+      jsonencode(abspath("${path.module}/../backend/handler.py")),
+      jsonencode(abspath("${path.module}/../backend/package/handler.py"))
+    )
   }
 }
 
