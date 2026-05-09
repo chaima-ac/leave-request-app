@@ -5,8 +5,9 @@ import { useTheme } from '../context/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Sun, Moon, Globe, LogOut, LayoutDashboard, FileText,
-  PlusCircle, Users, BarChart3, Menu, X, Layers, Settings,
+  PlusCircle, Users, BarChart3, Menu, X, Settings,
 } from 'lucide-react';
+import AppLogo from './AppLogo';
 import NotificationsDropdown from './NotificationsDropdown';
 
 const Navbar = () => {
@@ -66,12 +67,9 @@ const Navbar = () => {
 
           {/* Logo + nav links */}
           <div className="flex items-center gap-6">
-            <button onClick={() => navigate(`/${user?.role || 'login'}`)}
-              className="flex items-center gap-2.5 text-indigo-600 dark:text-indigo-400 hover:opacity-80 transition-opacity flex-shrink-0">
-              <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
-                <Layers size={14} className="text-white" />
-              </div>
-              <span className="font-bold text-base text-slate-900 dark:text-white">LeaveDesk</span>
+            <button type="button" onClick={() => navigate(`/${user?.role || 'login'}`)}
+              className="hover:opacity-85 transition-opacity flex-shrink-0 text-indigo-600 dark:text-indigo-400">
+              <AppLogo compact />
             </button>
 
             <div className="hidden md:flex items-center gap-0.5">

@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { login as loginApi, adminLogin } from '../services/api';
-import { Sun, Moon, Globe, Eye, EyeOff, Shield, ArrowRight, Layers } from 'lucide-react';
+import { Sun, Moon, Globe, Eye, EyeOff, Shield, ArrowRight } from 'lucide-react';
+import AppLogo from '../components/AppLogo';
 
 const LoginPage = () => {
   const { t, i18n } = useTranslation();
@@ -63,11 +64,8 @@ const LoginPage = () => {
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full opacity-20"
           style={{ background: 'radial-gradient(circle, #6366f1 0%, transparent 70%)', filter: 'blur(40px)' }} />
 
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="w-9 h-9 bg-indigo-500 rounded-lg flex items-center justify-center">
-            <Layers size={18} className="text-white" />
-          </div>
-          <span className="text-white font-semibold text-lg tracking-tight">LeaveDesk</span>
+        <div className="relative z-10">
+          <AppLogo inverse />
         </div>
 
         <div className="relative z-10">
@@ -92,17 +90,14 @@ const LoginPage = () => {
             ))}
           </div>
         </div>
-        <div className="relative z-10 text-slate-600 text-xs">© {new Date().getFullYear()} LeaveDesk</div>
+        <div className="relative z-10 text-slate-600 text-xs">© {new Date().getFullYear()} Leave Desk</div>
       </div>
 
       {/* Right form panel */}
       <div className="flex-1 flex flex-col bg-white dark:bg-slate-950">
         <div className="flex justify-between items-center px-6 py-5">
-          <div className="lg:hidden flex items-center gap-2">
-            <div className="w-7 h-7 bg-indigo-600 rounded-md flex items-center justify-center">
-              <Layers size={14} className="text-white" />
-            </div>
-            <span className="font-semibold text-slate-900 dark:text-white text-sm">LeaveDesk</span>
+          <div className="lg:hidden">
+            <AppLogo compact />
           </div>
           <div className="hidden lg:block" />
           <div className="flex gap-1 items-center">

@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import { Sun, Moon, Globe } from 'lucide-react';
+import AppLogo from '../components/AppLogo';
 
 const roles = [
   { key: 'employee', emoji: '👤', desc_en: 'Submit and track your leave requests',  desc_fr: 'Soumettez et suivez vos demandes de congé' },
@@ -32,7 +33,7 @@ const RoleSelect = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
       {/* Top bar */}
       <div className="flex justify-between items-center p-4">
-        <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">🏢 LeaveDesk</span>
+        <AppLogo titleClassName="text-xl font-bold text-indigo-600 dark:text-indigo-400" />
         <div className="flex gap-2">
           <button onClick={toggleLang}
             className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">

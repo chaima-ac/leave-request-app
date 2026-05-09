@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="7" fill="#4F46E5"/>
+  <!-- calendar header -->
+  <path fill="#C7D2FE" fill-opacity=".35" d="M8 9a2 2 0 0 1 2-2h1V6h2v1h6V6h2v1h1a2 2 0 0 1 2 2v3H8V9Z"/>
+  <rect x="8" y="12" width="16" height="14" rx="2" fill="white" fill-opacity=".95"/>
+  <path stroke="#4F46E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="m13 19 2 2 4.5-5.5"/>
+</svg>
