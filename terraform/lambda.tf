@@ -1,30 +1,17 @@
-# Install dependencies targeting Linux x86_64 (required for Lambda)
-resource "null_resource" "install_dependencies" {
+# One step: pip deps + handler copy — avoids CI where stale state skips pip but reruns copy
+# (fresh checkout has no backend/package; copy-only would fail empty).
+resource "null_resource" "lambda_package" {
   triggers = {
     requirements = filemd5("${path.module}/../backend/requirements.txt")
     handler      = filemd5("${path.module}/../backend/handler.py")
   }
 
   provisioner "local-exec" {
-    command = "pip install -r ${path.module}/../backend/requirements.txt -t ${path.module}/../backend/package --upgrade --no-user --platform manylinux2014_x86_64 --only-binary=:all: --python-version 3.11"
-  }
-}
-
-# Copy handler.py into the package folder
-resource "null_resource" "copy_handler" {
-  depends_on = [null_resource.install_dependencies]
-
-  triggers = {
-    handler = filemd5("${path.module}/../backend/handler.py")
-  }
-
-  # Paths via env (avoids shell breaking nested quotes inside python -c "…")
-  provisioner "local-exec" {
     environment = {
       HANDLER_SRC = abspath("${path.module}/../backend/handler.py")
       HANDLER_DST = abspath("${path.module}/../backend/package/handler.py")
     }
-    command = "python -c \"import shutil, os; shutil.copyfile(os.environ['HANDLER_SRC'], os.environ['HANDLER_DST'])\""
+    command = "pip install -r ${path.module}/../backend/requirements.txt -t ${path.module}/../backend/package --upgrade --no-user --platform manylinux2014_x86_64 --only-binary=:all: --python-version 3.11 && python -c \"import shutil, os, pathlib; pathlib.Path(os.environ['HANDLER_DST']).parent.mkdir(parents=True, exist_ok=True); shutil.copyfile(os.environ['HANDLER_SRC'], os.environ['HANDLER_DST'])\""
   }
 }
 
@@ -34,7 +21,7 @@ data "archive_file" "lambda_zip" {
   source_dir  = "${path.module}/../backend/package"
   output_path = "${path.module}/lambda_function.zip"
 
-  depends_on = [null_resource.copy_handler]
+  depends_on = [null_resource.lambda_package]
 }
 
 # Lambda function
