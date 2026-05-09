@@ -18,13 +18,13 @@ resource "null_resource" "copy_handler" {
     handler = filemd5("${path.module}/../backend/handler.py")
   }
 
-  # Portable copy (Linux CI + Windows/macOS with Python on PATH — same as pip below)
+  # Paths via env (avoids shell breaking nested quotes inside python -c "…")
   provisioner "local-exec" {
-    command = format(
-      "python -c \"import shutil, pathlib; shutil.copyfile(pathlib.Path(%s), pathlib.Path(%s))\"",
-      jsonencode(abspath("${path.module}/../backend/handler.py")),
-      jsonencode(abspath("${path.module}/../backend/package/handler.py"))
-    )
+    environment = {
+      HANDLER_SRC = abspath("${path.module}/../backend/handler.py")
+      HANDLER_DST = abspath("${path.module}/../backend/package/handler.py")
+    }
+    command = "python -c \"import shutil, os; shutil.copyfile(os.environ['HANDLER_SRC'], os.environ['HANDLER_DST'])\""
   }
 }
 
