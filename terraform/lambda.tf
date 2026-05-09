@@ -1,5 +1,6 @@
-# One step: pip deps + handler copy — avoids CI where stale state skips pip but reruns copy
-# (fresh checkout has no backend/package; copy-only would fail empty).
+# Pip + handler into backend/package. Runs on apply (local dev).
+# GitHub Actions also builds backend/package before terraform plan because
+# data.archive_file evaluates at plan time — see .github/workflows/deploy.yml
 resource "null_resource" "lambda_package" {
   triggers = {
     requirements = filemd5("${path.module}/../backend/requirements.txt")

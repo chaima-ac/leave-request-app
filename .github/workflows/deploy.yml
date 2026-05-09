@@ -42,6 +42,17 @@ jobs:
         with:
           python-version: '3.11'
 
+      # archive_file.lambda_zip runs during terraform plan — before null_resource provisioners.
+      # Build the Lambda layer here so ./backend/package exists when Terraform reads it.
+      - name: Build Lambda deployment package (for Terraform archive)
+        run: |
+          pip install -r backend/requirements.txt -t backend/package \
+            --upgrade --no-user \
+            --platform manylinux2014_x86_64 --only-binary=:all: \
+            --python-version 3.11
+          mkdir -p backend/package
+          cp backend/handler.py backend/package/handler.py
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
