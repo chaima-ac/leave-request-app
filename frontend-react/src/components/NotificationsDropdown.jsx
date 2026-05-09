@@ -6,9 +6,12 @@ import { getMyRequests, getAllRequests, getUsers } from '../services/api';
 const POLL_INTERVAL = 30000;
 
 const typeStyles = {
-  approved: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-  rejected: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  pending:  'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  approved:          'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  pending_manager:   'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  pending_hr:        'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  rejected_manager:  'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  rejected_hr:       'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  cancelled:         'bg-slate-100 text-slate-700 dark:bg-slate-900/40 dark:text-slate-400',
 };
 
 const getReadKey = (userId) => `ld_read_${userId}`;
@@ -38,13 +41,14 @@ const NotificationsDropdown = () => {
       let items = [];
       if (user.role === 'employee') {
         const res = await getMyRequests();
+        const stillPending = (s) => ['pending_manager', 'pending_hr'].includes((s || '').toLowerCase());
         items = (res.data.requests || [])
-          .filter(r => r.status?.toLowerCase() !== 'pending')
+          .filter(r => !stillPending(r.status))
           .map(r => ({
             id: r.request_id,
-            message: `Your ${r.leave_type} request was ${r.status?.toLowerCase()}`,
+            message: `Your ${r.leave_type} request was ${(r.status || '').replace(/_/g, ' ')}`,
             time: r.updated_at || r.created_at,
-            type: r.status?.toLowerCase(),
+            type: (r.status || '').toLowerCase(),
           }))
           .slice(0, 10);
       } else if (['admin', 'manager', 'hr'].includes(user.role)) {
@@ -65,13 +69,19 @@ const NotificationsDropdown = () => {
           } catch {}
         }
 
+        const awaitsMe = (r) => {
+          const s = (r.status || '').toLowerCase();
+          if (user.role === 'manager') return s === 'pending_manager';
+          if (user.role === 'hr') return s === 'pending_hr';
+          return s === 'pending_manager' || s === 'pending_hr';
+        };
         items = allReqs
-          .filter(r => r.status?.toLowerCase() === 'pending')
+          .filter(awaitsMe)
           .map(r => ({
             id: r.request_id,
-            message: `${r.employee_name} requested ${r.leave_type} leave`,
-            time: r.created_at,
-            type: 'pending',
+            message: `${r.employee_name}'s ${r.leave_type} leave needs review`,
+            time: r.updated_at || r.created_at,
+            type: (r.status || '').toLowerCase(),
           }))
           .slice(0, 10);
       }
@@ -153,7 +163,7 @@ const NotificationsDropdown = () => {
                   return (
                     <div key={n.id}
                       className={`px-4 py-3 flex items-start gap-3 transition-colors group ${isUnread ? 'bg-indigo-50/60 dark:bg-indigo-900/10' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}>
-                      <span className={`mt-0.5 px-2 py-0.5 rounded-full text-xs font-semibold capitalize flex-shrink-0 ${typeStyles[n.type] || typeStyles.pending}`}>
+                      <span className={`mt-0.5 px-2 py-0.5 rounded-full text-xs font-semibold capitalize flex-shrink-0 ${typeStyles[n.type] || 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}`}>
                         {n.type}
                       </span>
                       <div className="flex-1 min-w-0">

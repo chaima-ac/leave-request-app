@@ -47,7 +47,7 @@ const LoginPage = () => {
         navigate(`/${d.role}`);
       }
     } catch (err) {
-      setError(err.response?.data?.message || t('error'));
+      setError(err.response?.data?.error ?? t('error'));
     }
     setLoading(false);
   };

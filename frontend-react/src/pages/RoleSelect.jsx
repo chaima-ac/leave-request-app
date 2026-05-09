@@ -4,10 +4,10 @@ import { useTheme } from '../context/ThemeContext';
 import { Sun, Moon, Globe } from 'lucide-react';
 
 const roles = [
-  { key: 'employee', emoji: '👤', desc_en: 'Submit and track your leave requests', desc_fr: 'Soumettez et suivez vos demandes de congé' },
-  { key: 'manager', emoji: '👔', desc_en: 'Manage your team\'s leave requests', desc_fr: 'Gérez les congés de votre équipe' },
-  { key: 'hr', emoji: '🏢', desc_en: 'Oversee all employees and analytics', desc_fr: 'Supervisez tous les employés et analyses' },
-  { key: 'admin', emoji: '⚙️', desc_en: 'Full system administration', desc_fr: 'Administration complète du système' },
+  { key: 'employee', emoji: '👤', desc_en: 'Submit and track your leave requests',  desc_fr: 'Soumettez et suivez vos demandes de congé' },
+  { key: 'manager',  emoji: '👔', desc_en: "Manage your team's leave requests",     desc_fr: 'Gérez les congés de votre équipe' },
+  { key: 'hr',       emoji: '🏢', desc_en: 'Oversee all employees and analytics',   desc_fr: 'Supervisez tous les employés et analyses' },
+  { key: 'admin',    emoji: '⚙️', desc_en: 'Full system administration',            desc_fr: 'Administration complète du système' },
 ];
 
 const RoleSelect = () => {
@@ -19,6 +19,13 @@ const RoleSelect = () => {
     const newLang = i18n.language === 'en' ? 'fr' : 'en';
     i18n.changeLanguage(newLang);
     localStorage.setItem('language', newLang);
+  };
+
+  // All roles use the single /login page.
+  // LoginPage handles employee/manager/hr via email+password,
+  // and admin via the "Admin access" toggle + password-only form.
+  const handleRoleClick = () => {
+    navigate('/login');
   };
 
   return (
@@ -45,7 +52,9 @@ const RoleSelect = () => {
             {t('selectRole')}
           </h1>
           <p className="text-gray-500 dark:text-gray-400">
-            {i18n.language === 'fr' ? 'Choisissez votre rôle pour continuer' : 'Choose your role to continue'}
+            {i18n.language === 'fr'
+              ? 'Choisissez votre rôle pour continuer'
+              : 'Choose your role to continue'}
           </p>
         </div>
 
@@ -53,7 +62,7 @@ const RoleSelect = () => {
           {roles.map(role => (
             <button
               key={role.key}
-              onClick={() => navigate(`/login/${role.key}`)}
+              onClick={handleRoleClick}
               className="group bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-500 rounded-2xl p-6 text-left transition-all hover:shadow-lg hover:-translate-y-1"
             >
               <div className="text-4xl mb-3">{role.emoji}</div>

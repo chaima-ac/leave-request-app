@@ -14,17 +14,16 @@ const ManagerTeam = () => {
   useEffect(() => {
     Promise.all([getUsers(), getAllRequests()])
       .then(([usersRes, reqRes]) => {
-        const allUsers    = usersRes.data.users    || [];
-        const allRequests = reqRes.data.requests   || [];
+        const allUsers    = usersRes.data.users  || [];
+        const allRequests = reqRes.data.requests || [];
 
-        // getUsers() is already filtered server-side for managers
-        // but keep client-side filter as safety net
+        // Backend already scopes getUsers() to manager's group,
+        // client-side filter kept as safety net
         const dept = (user?.department || '').toLowerCase();
         const deptUsers = dept
           ? allUsers.filter(u => (u.department || '').toLowerCase() === dept && u.role === 'employee')
           : allUsers.filter(u => u.role === 'employee');
 
-        // Attach request stats to each member using employee_id
         const enriched = deptUsers.map(u => ({
           ...u,
           requests: allRequests.filter(r => r.employee_id === u.employee_id),
@@ -43,11 +42,14 @@ const ManagerTeam = () => {
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-7">
-          <p className="text-xs font-semibold uppercase tracking-widest text-indigo-500 dark:text-indigo-400 mb-1">Team Manager</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-indigo-500 dark:text-indigo-400 mb-1">
+            Team Manager
+          </p>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('team')}</h1>
           {user?.department && (
             <p className="text-sm text-slate-400 mt-0.5">
-              {members.length} member{members.length !== 1 ? 's' : ''} · <strong className="text-slate-500 dark:text-slate-300">{user.department}</strong>
+              {members.length} member{members.length !== 1 ? 's' : ''} ·{' '}
+              <strong className="text-slate-500 dark:text-slate-300">{user.department}</strong>
             </p>
           )}
         </div>
@@ -69,9 +71,22 @@ const ManagerTeam = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {members.map(member => {
               const mReqs = member.requests;
+
               const isOff = mReqs.some(r =>
                 r.status === 'approved' && r.start_date <= today && r.end_date >= today
               );
+
+              // Handler statuses: pending_manager | pending_hr | approved |
+              //                   rejected_manager | rejected_hr | cancelled
+              const pendingCount  = mReqs.filter(r =>
+                r.status === 'pending_manager' || r.status === 'pending_hr'
+              ).length;
+              const approvedCount = mReqs.filter(r => r.status === 'approved').length;
+              const rejectedCount = mReqs.filter(r =>
+                r.status === 'rejected_manager' || r.status === 'rejected_hr'
+              ).length;
+
+              // Days taken = sum of approved request durations
               const totalDays = mReqs
                 .filter(r => r.status === 'approved')
                 .reduce((acc, r) => {
@@ -80,6 +95,12 @@ const ManagerTeam = () => {
                     (new Date(r.end_date) - new Date(r.start_date)) / 86400000
                   ) + 1);
                 }, 0);
+
+              const miniStats = [
+                { label: 'Pending',  value: pendingCount  },
+                { label: 'Approved', value: approvedCount },
+                { label: 'Rejected', value: rejectedCount },
+              ];
 
               return (
                 <div key={member.employee_id}
@@ -102,13 +123,14 @@ const ManagerTeam = () => {
                     </div>
                   </div>
 
+                  {/* Stats using correct handler status groups */}
                   <div className="grid grid-cols-3 gap-2 text-center mb-4">
-                    {['pending', 'approved', 'rejected'].map(s => (
-                      <div key={s} className="bg-slate-50 dark:bg-slate-800 rounded-xl py-2.5">
+                    {miniStats.map(s => (
+                      <div key={s.label} className="bg-slate-50 dark:bg-slate-800 rounded-xl py-2.5">
                         <p className="text-base font-bold text-slate-900 dark:text-white tabular-nums">
-                          {mReqs.filter(r => r.status === s).length}
+                          {s.value}
                         </p>
-                        <p className="text-xs text-slate-400 capitalize">{t(s)}</p>
+                        <p className="text-xs text-slate-400">{s.label}</p>
                       </div>
                     ))}
                   </div>

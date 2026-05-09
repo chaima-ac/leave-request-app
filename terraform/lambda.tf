@@ -19,7 +19,8 @@ resource "null_resource" "copy_handler" {
   }
 
   provisioner "local-exec" {
-    command = "cp ${path.module}/../backend/handler.py ${path.module}/../backend/package/handler.py"
+    interpreter = ["PowerShell", "-Command"]
+    command     = "Copy-Item -Path '${path.module}/../backend/handler.py' -Destination '${path.module}/../backend/package/handler.py' -Force"
   }
 }
 

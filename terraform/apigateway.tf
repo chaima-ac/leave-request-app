@@ -1,12 +1,12 @@
-# HTTP API Gateway - with a new name to avoid conflicts
+# HTTP API Gateway
 resource "aws_apigatewayv2_api" "leave_api" {
-  name          = "LeaveManagementAPI-v2"  # Changed name
+  name          = "LeaveManagementAPI-v2"
   protocol_type = "HTTP"
   
   cors_configuration {
     allow_origins = ["*"]
     allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-    allow_headers = ["Content-Type", "Authorization"]  # Added Authorization
+    allow_headers = ["Content-Type", "Authorization"]
   }
 }
 
@@ -26,28 +26,16 @@ resource "aws_apigatewayv2_integration" "lambda" {
   payload_format_version = "2.0"
 }
 
-# ── Existing Routes ───────────────────────────────────────────────────────────
-
-resource "aws_apigatewayv2_route" "get_requests" {
-  api_id    = aws_apigatewayv2_api.leave_api.id
-  route_key = "GET /requests"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+# Lambda Permission
+resource "aws_lambda_permission" "api_gw" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.leave_api_handler.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.leave_api.execution_arn}/*/*"
 }
 
-resource "aws_apigatewayv2_route" "submit_request" {
-  api_id    = aws_apigatewayv2_api.leave_api.id
-  route_key = "POST /submit"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
-}
-
-resource "aws_apigatewayv2_route" "update_status" {
-  api_id    = aws_apigatewayv2_api.leave_api.id
-  route_key = "PUT /request-status"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
-}
-
-# ── New Routes (auth + employee-scoped requests) ──────────────────────────────
-
+# ── Auth ──────────────────────────────────────────────────────────────────────
 resource "aws_apigatewayv2_route" "register" {
   api_id    = aws_apigatewayv2_api.leave_api.id
   route_key = "POST /register"
@@ -66,23 +54,66 @@ resource "aws_apigatewayv2_route" "admin_login" {
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
+# ── Employee ──────────────────────────────────────────────────────────────────
 resource "aws_apigatewayv2_route" "my_requests" {
   api_id    = aws_apigatewayv2_api.leave_api.id
   route_key = "GET /my-requests"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
-# Lambda Permission
-resource "aws_lambda_permission" "api_gw" {
-  statement_id  = "AllowExecutionFromAPIGateway"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.leave_api_handler.function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.leave_api.execution_arn}/*/*"
+resource "aws_apigatewayv2_route" "my_balance" {
+  api_id    = aws_apigatewayv2_api.leave_api.id
+  route_key = "GET /my-balance"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
-# ── Admin User Management Routes ──────────────────────────────────────────────
+resource "aws_apigatewayv2_route" "submit_request" {
+  api_id    = aws_apigatewayv2_api.leave_api.id
+  route_key = "POST /submit"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
 
+resource "aws_apigatewayv2_route" "cancel_request" {
+  api_id    = aws_apigatewayv2_api.leave_api.id
+  route_key = "PUT /cancel-request"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+# ── Manager ───────────────────────────────────────────────────────────────────
+resource "aws_apigatewayv2_route" "manager_review" {
+  api_id    = aws_apigatewayv2_api.leave_api.id
+  route_key = "PUT /manager-review"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+# ── HR ────────────────────────────────────────────────────────────────────────
+resource "aws_apigatewayv2_route" "hr_review" {
+  api_id    = aws_apigatewayv2_api.leave_api.id
+  route_key = "PUT /hr-review"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+# ── Shared ────────────────────────────────────────────────────────────────────
+resource "aws_apigatewayv2_route" "get_requests" {
+  api_id    = aws_apigatewayv2_api.leave_api.id
+  route_key = "GET /requests"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+# ── Leave Policy ──────────────────────────────────────────────────────────────
+resource "aws_apigatewayv2_route" "get_leave_policy" {
+  api_id    = aws_apigatewayv2_api.leave_api.id
+  route_key = "GET /leave-policy"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "put_leave_policy" {
+  api_id    = aws_apigatewayv2_api.leave_api.id
+  route_key = "PUT /leave-policy"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+# ── Admin User Management ─────────────────────────────────────────────────────
 resource "aws_apigatewayv2_route" "create_user" {
   api_id    = aws_apigatewayv2_api.leave_api.id
   route_key = "POST /admin/create-user"
@@ -112,14 +143,15 @@ resource "aws_apigatewayv2_route" "delete_request" {
   route_key = "DELETE /admin/delete-request"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
-resource "aws_apigatewayv2_route" "get_leave_policy" {
+
+resource "aws_apigatewayv2_route" "admin_stats" {
   api_id    = aws_apigatewayv2_api.leave_api.id
-  route_key = "GET /leave-policy"
+  route_key = "GET /admin/stats"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
-resource "aws_apigatewayv2_route" "put_leave_policy" {
+resource "aws_apigatewayv2_route" "update_balance" {
   api_id    = aws_apigatewayv2_api.leave_api.id
-  route_key = "PUT /leave-policy"
+  route_key = "PUT /admin/update-balance"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }

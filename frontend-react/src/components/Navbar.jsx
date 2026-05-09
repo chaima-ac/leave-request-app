@@ -33,19 +33,19 @@ const Navbar = () => {
     ],
     manager: [
       { path: '/manager',           icon: <LayoutDashboard size={16} />, label: t('dashboard') },
-      { path: '/manager/team',      icon: <Users size={16} />,           label: t('team') },
-      { path: '/manager/requests',  icon: <FileText size={16} />,        label: t('allRequests') },
+      { path: '/manager/team',      icon: <Users size={16} />,           label: 'My Team' },
+      { path: '/manager/requests',  icon: <FileText size={16} />,        label: 'Team Requests' },
       { path: '/manager/analytics', icon: <BarChart3 size={16} />,       label: t('analytics') },
     ],
     hr: [
       { path: '/hr',           icon: <LayoutDashboard size={16} />, label: t('dashboard') },
-      { path: '/hr/requests',  icon: <FileText size={16} />,        label: t('allRequests') },
+      { path: '/hr/requests',  icon: <FileText size={16} />,        label: 'HR Review' },
       { path: '/hr/analytics', icon: <BarChart3 size={16} />,       label: t('analytics') },
       { path: '/hr/users',     icon: <Users size={16} />,           label: t('users') },
     ],
     admin: [
       { path: '/admin',           icon: <LayoutDashboard size={16} />, label: t('dashboard') },
-      { path: '/admin/requests',  icon: <FileText size={16} />,        label: t('allRequests') },
+      { path: '/admin/requests',  icon: <FileText size={16} />,        label: 'All Requests' },
       { path: '/admin/analytics', icon: <BarChart3 size={16} />,       label: t('analytics') },
       { path: '/admin/users',     icon: <Users size={16} />,           label: t('users') },
       { path: '/admin/settings',  icon: <Settings size={16} />,        label: t('settings') },

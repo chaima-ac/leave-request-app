@@ -34,43 +34,30 @@ const AnalyticsPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const isManager = user?.role === 'manager';
-    const dept = (user?.department || '').toLowerCase();
+    // Backend now pre-filters by manager_id for managers
+    getAllRequests()
+      .then(res => { setRequests(res.data.requests || []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
 
-    if (isManager && dept) {
-      // Fetch users to get department employee IDs, then filter requests
-      Promise.all([getUsers(), getAllRequests()])
-        .then(([usersRes, reqRes]) => {
-          const allUsers    = usersRes.data.users    || [];
-          const allRequests = reqRes.data.requests   || [];
-          const deptIds = new Set(
-            allUsers
-              .filter(u => (u.department || '').toLowerCase() === dept && u.role === 'employee')
-              .map(u => u.employee_id)
-          );
-          setRequests(allRequests.filter(r => deptIds.has(r.employee_id)));
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
-    } else {
-      getAllRequests()
-        .then(res => { setRequests(res.data.requests || []); setLoading(false); })
-        .catch(() => setLoading(false));
-    }
-  }, [user?.role, user?.department]);
-
-  const normalize = (s) => s?.toLowerCase() || '';
+  const s = (status) => requests.filter(r => r.status === status).length;
 
   const stats = {
-    total: requests.length,
-    approved: requests.filter(r => normalize(r.status) === 'approved').length,
-    rejected: requests.filter(r => normalize(r.status) === 'rejected').length,
-    pending: requests.filter(r => normalize(r.status) === 'pending').length,
+    total:           requests.length,
+    pendingManager:  s('pending_manager'),
+    pendingHr:       s('pending_hr'),
+    approved:        s('approved'),
+    rejectedManager: s('rejected_manager'),
+    rejectedHr:      s('rejected_hr'),
+    cancelled:       s('cancelled'),
   };
 
-  const approvalRate = stats.total > 0
-    ? Math.round((stats.approved / stats.total) * 100)
-    : 0;
+  const totalRejected = stats.rejectedManager + stats.rejectedHr;
+  const totalPending  = stats.pendingManager + stats.pendingHr;
+
+  const approvalRate = (stats.approved + totalRejected) > 0
+    ? Math.round((stats.approved / (stats.approved + totalRejected)) * 100)
+    : null;
 
   // Requests by month (last 12 months)
   const monthData = Array.from({ length: 12 }, (_, i) => {
@@ -105,9 +92,12 @@ const AnalyticsPage = () => {
 
   // Status breakdown
   const statusData = [
-    { name: t('approved'), value: stats.approved },
-    { name: t('pending'), value: stats.pending },
-    { name: t('rejected'), value: stats.rejected },
+    { name: 'Approved',           value: stats.approved },
+    { name: 'Pending manager',    value: stats.pendingManager },
+    { name: 'Pending HR',         value: stats.pendingHr },
+    { name: 'Rejected (manager)', value: stats.rejectedManager },
+    { name: 'Rejected (HR)',      value: stats.rejectedHr },
+    { name: 'Cancelled',          value: stats.cancelled },
   ].filter(d => d.value > 0);
 
   // Top employees by requests
@@ -139,16 +129,19 @@ const AnalyticsPage = () => {
 
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('analytics')}</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">{user?.role === 'manager' && user?.department ? `${user.department} department analytics` : 'Full overview of all leave requests'}</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">
+            {user?.role === 'manager' ? 'Your team analytics' : 'Full overview of all leave requests'}
+          </p>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-          <StatCard title={t('totalRequests')} value={stats.total} icon={<FileText size={22} />} color="blue" />
-          <StatCard title={t('approvedRequests')} value={stats.approved} icon={<CheckCircle size={22} />} color="green" />
-          <StatCard title={t('rejectedRequests')} value={stats.rejected} icon={<XCircle size={22} />} color="red" />
-          <StatCard title={t('pendingRequests')} value={stats.pending} icon={<Clock size={22} />} color="yellow" />
-          <StatCard title={t('approvalRate')} value={`${approvalRate}%`} icon={<TrendingUp size={22} />} color="indigo" />
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
+          <StatCard title="Total"        value={stats.total}          icon={<FileText size={22} />} color="blue" />
+          <StatCard title="Pending Mgr"  value={stats.pendingManager} icon={<Clock size={22} />}    color="yellow" />
+          <StatCard title="Pending HR"   value={stats.pendingHr}      icon={<Clock size={22} />}    color="blue" />
+          <StatCard title="Approved"     value={stats.approved}       icon={<CheckCircle size={22} />} color="green" />
+          <StatCard title="Rejected"     value={totalRejected}        icon={<XCircle size={22} />}  color="red" />
+          <StatCard title="Approval Rate" value={approvalRate !== null ? `${approvalRate}%` : '—'} icon={<TrendingUp size={22} />} color="indigo" />
         </div>
 
         {/* Charts row 1 */}
@@ -179,9 +172,12 @@ const AnalyticsPage = () => {
                       dataKey="value" startAngle={90} endAngle={-270}>
                       {statusData.map((entry, i) => {
                         const colorMap = {
-                          [t('approved')]: '#22c55e',
-                          [t('pending')]:  '#f59e0b',
-                          [t('rejected')]: '#ef4444',
+                          'Approved':           '#10b981', // emerald-500
+                          'Pending manager':    '#fbbf24', // amber-400
+                          'Pending HR':         '#60a5fa', // blue-400
+                          'Rejected (manager)': '#f87171', // red-400
+                          'Rejected (HR)':      '#dc2626', // red-600
+                          'Cancelled':          '#94a3b8', // slate-400
                         };
                         return <Cell key={i} fill={colorMap[entry.name] || COLORS[i]} strokeWidth={0} />;
                       })}
@@ -192,11 +188,14 @@ const AnalyticsPage = () => {
                 <div className="flex flex-col gap-3 flex-1">
                   {statusData.map((entry) => {
                     const colorMap = {
-                      [t('approved')]: { dot: 'bg-green-500',  text: 'text-green-600 dark:text-green-400' },
-                      [t('pending')]:  { dot: 'bg-amber-400',  text: 'text-amber-600 dark:text-amber-400' },
-                      [t('rejected')]: { dot: 'bg-red-500',    text: 'text-red-600 dark:text-red-400' },
+                      'Approved':           { dot: 'bg-emerald-500',  text: 'text-emerald-600 dark:text-emerald-400' },
+                      'Pending manager':    { dot: 'bg-amber-400',    text: 'text-amber-600 dark:text-amber-400' },
+                      'Pending HR':         { dot: 'bg-blue-400',     text: 'text-blue-600 dark:text-blue-400' },
+                      'Rejected (manager)': { dot: 'bg-red-400',      text: 'text-red-500 dark:text-red-400' },
+                      'Rejected (HR)':      { dot: 'bg-red-600',      text: 'text-red-700 dark:text-red-500' },
+                      'Cancelled':          { dot: 'bg-slate-400',    text: 'text-slate-600 dark:text-slate-400' },
                     };
-                    const c = colorMap[entry.name] || { dot: 'bg-indigo-500', text: 'text-indigo-600' };
+                    const c = colorMap[entry.name] || { dot: 'bg-indigo-500', text: 'text-indigo-600 dark:text-indigo-400' };
                     const pct = stats.total > 0 ? Math.round((entry.value / stats.total) * 100) : 0;
                     return (
                       <div key={entry.name}>

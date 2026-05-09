@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'https://1btpbwnf8c.execute-api.us-east-1.amazonaws.com/dev';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const api = axios.create({ baseURL: API_BASE });
 
@@ -10,26 +10,39 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Auth
-export const register = (data) => api.post('/register', data);
-export const login = (data) => api.post('/login', data);
+// ── Auth ───────────────────────────────────────────────────────────────────
+export const register   = (data) => api.post('/register',    data);
+export const login      = (data) => api.post('/login',       data);
 export const adminLogin = (data) => api.post('/admin-login', data);
 
-// Requests
-export const getMyRequests = () => api.get('/my-requests');
+// ── Employee ───────────────────────────────────────────────────────────────
+export const getMyRequests = ()     => api.get('/my-requests');
+export const getMyBalance  = ()     => api.get('/my-balance');
+export const submitRequest = (data) => api.post('/submit',         data);
+export const cancelRequest = (data) => api.put('/cancel-request',  data);
+
+// ── Manager — level 1 review ───────────────────────────────────────────────
+export const managerReview = (data) => api.put('/manager-review', data);
+
+// ── HR — level 2 final review ──────────────────────────────────────────────
+export const hrReview = (data) => api.put('/hr-review', data);
+
+// ── Shared ─────────────────────────────────────────────────────────────────
 export const getAllRequests = () => api.get('/requests');
-export const submitRequest = (data) => api.post('/submit', data);
-export const updateStatus = (data) => api.put('/request-status', data);
+export const getUsers      = () => api.get('/admin/users');
+export const getStats      = () => api.get('/admin/stats');
+
+// ── Leave policy ───────────────────────────────────────────────────────────
+export const getLeavePolicy    = ()     => api.get('/leave-policy');
+export const updateLeavePolicy = (data) => api.put('/leave-policy', data);
+
+// ── Admin only ─────────────────────────────────────────────────────────────
+export const createUser    = (data) => api.post('/admin/create-user',      data);
+export const updateUser    = (data) => api.put('/admin/update-user',       data);
+export const deleteUser    = (data) => api.delete('/admin/delete-user',    { data });
 export const deleteRequest = (data) => api.delete('/admin/delete-request', { data });
 
-// Admin user management
-export const getUsers = () => api.get('/admin/users');
-export const createUser = (data) => api.post('/admin/create-user', data);
-export const updateUser = (data) => api.put('/admin/update-user', data);
-export const deleteUser = (data) => api.delete('/admin/delete-user', { data });
+// ── Admin + HR ─────────────────────────────────────────────────────────────
+export const updateBalance = (data) => api.put('/admin/update-balance', data);
 
 export default api;
-
-// Leave policy
-export const getLeavePolicy = () => api.get('/leave-policy');
-export const updateLeavePolicy = (data) => api.put('/leave-policy', data);
