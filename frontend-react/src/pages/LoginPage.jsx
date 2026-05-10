@@ -48,7 +48,19 @@ const LoginPage = () => {
         navigate(`/${d.role}`);
       }
     } catch (err) {
-      setError(err.response?.data?.error ?? t('error'));
+      const data = err.response?.data;
+      const backendError =
+        (typeof data === 'object' && (data?.error || data?.message)) ||
+        (typeof data === 'string' && data) ||
+        '';
+
+      if (backendError) {
+        setError(backendError);
+      } else if (!import.meta.env.VITE_API_URL) {
+        setError('API is not configured. Set VITE_API_URL in your frontend environment.');
+      } else {
+        setError(err.message || t('error'));
+      }
     }
     setLoading(false);
   };

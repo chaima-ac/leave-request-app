@@ -38,6 +38,26 @@ def verify_password(p, h):
     try: return bcrypt.checkpw(p.encode(), h.encode())
     except: return False
 
+def verify_employee_password(plain_password, employee):
+    """
+    Support both current bcrypt hashes and legacy plaintext values so
+    existing users can still log in after auth schema changes.
+    """
+    stored_hash = employee.get("password_hash") or ""
+    if stored_hash:
+        # Standard path: bcrypt hash
+        if verify_password(plain_password, stored_hash):
+            return True
+        # Backward compatibility: some legacy records may have plain text in password_hash
+        if plain_password == str(stored_hash):
+            return True
+
+    legacy_password = employee.get("password")
+    if legacy_password is not None and plain_password == str(legacy_password):
+        return True
+
+    return False
+
 def create_session(employee_id, role, days=30):
     token = secrets.token_hex(32)
     exp   = datetime.utcnow() + timedelta(days=days)
@@ -154,7 +174,7 @@ def lambda_handler(event, context):
             pw    =  body.get("password") or ""
             if not email or not pw: return respond(400, {"error": "Email and password are required."})
             items = employees_table.query(IndexName="email-index", KeyConditionExpression=Key("email").eq(email)).get("Items", [])
-            if not items or not verify_password(pw, items[0].get("password_hash", "")):
+            if not items or not verify_employee_password(pw, items[0]):
                 return respond(401, {"error": "Invalid email or password."})
             emp = items[0]
             tok = create_session(emp["employee_id"], emp.get("role", "employee"))
