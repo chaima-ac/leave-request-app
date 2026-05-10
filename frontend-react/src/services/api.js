@@ -1,10 +1,17 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+const rawApiBase = (import.meta.env.VITE_API_URL || '').trim();
+const API_BASE = rawApiBase.replace(/\/+$/, '');
+const isValidApiBase = /^https?:\/\//i.test(API_BASE);
 
-const api = axios.create({ baseURL: API_BASE });
+const api = axios.create({ baseURL: isValidApiBase ? API_BASE : undefined });
 
 api.interceptors.request.use((config) => {
+  if (!isValidApiBase) {
+    return Promise.reject(
+      new Error('API is misconfigured. Set VITE_API_URL to your API Gateway URL (https://.../dev).')
+    );
+  }
   const token = localStorage.getItem('ld_token');
   if (token) config.headers.Authorization = token;
   return config;
