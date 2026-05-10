@@ -31,7 +31,7 @@ const LoginPage = () => {
     setError('');
     try {
       if (adminMode) {
-        const res = await adminLogin({ password: form.password });
+        const res = await adminLogin({ password: form.password.trim() });
         login({ token: res.data.token, role: 'admin', name: 'Admin', email: 'admin', employeeId: 'admin', department: '' });
         navigate('/admin');
       } else {
@@ -49,6 +49,7 @@ const LoginPage = () => {
       }
     } catch (err) {
       const data = err.response?.data;
+      const status = err.response?.status;
       const backendError =
         (typeof data === 'object' && (data?.error || data?.message)) ||
         (typeof data === 'string' && data) ||
@@ -59,7 +60,10 @@ const LoginPage = () => {
       } else if (!import.meta.env.VITE_API_URL) {
         setError('API is not configured. Set VITE_API_URL in your frontend environment.');
       } else {
-        setError(err.message || t('error'));
+        const fallback = err.message
+          ? `${err.message}${status ? ` (HTTP ${status})` : ''}`
+          : `Request failed${status ? ` (HTTP ${status})` : ''}`;
+        setError(fallback);
       }
     }
     setLoading(false);

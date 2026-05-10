@@ -14,7 +14,7 @@ employees_table = dynamodb.Table(os.environ.get('EMPLOYEES_TABLE', 'Employees'))
 sessions_table  = dynamodb.Table(os.environ.get('SESSIONS_TABLE',  'Sessions'))
 policies_table  = dynamodb.Table(os.environ.get('POLICIES_TABLE',  'LeavePolicies'))
 
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin123')
+ADMIN_PASSWORD = (os.environ.get('ADMIN_PASSWORD', 'admin123') or '').strip()
 VALID_ROLES    = ['employee', 'manager', 'hr', 'admin']
 
 DEFAULT_POLICY = {
@@ -188,7 +188,8 @@ def lambda_handler(event, context):
 
         # POST /admin-login
         elif path.endswith("/admin-login") and method == "POST":
-            if body.get("password") != ADMIN_PASSWORD:
+            admin_pw = str(body.get("password") or "").strip()
+            if admin_pw != ADMIN_PASSWORD:
                 return respond(401, {"error": "Invalid admin password."})
             return respond(200, {"token": create_session("admin", "admin", days=1)})
 
