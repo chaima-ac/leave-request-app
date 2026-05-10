@@ -11,6 +11,5 @@ Currently, two official plugins are available:
 
 This app requires `VITE_API_URL` for authentication and API calls.
 
-1. Copy `.env.example` to `.env`
-2. Set `VITE_API_URL` to your API Gateway stage URL (example: `https://<api-id>.execute-api.us-east-1.amazonaws.com/dev`)
-3. Restart the frontend dev server
+1. Ensure `.env` includes `VITE_API_URL=https://<api-id>.execute-api.<region>.amazonaws.com/dev`
+2. Restart the frontend dev server after changing `.env`

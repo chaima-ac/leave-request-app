@@ -34,6 +34,8 @@ jobs:
 
       - name: Build React app
         working-directory: frontend-react
+        env:
+          VITE_API_URL: https://txgblifa8c.execute-api.us-east-1.amazonaws.com/dev
         run: npm run build
 
       # ── Step 3: Install Terraform ─────────────────────────
