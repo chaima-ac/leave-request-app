@@ -7,12 +7,19 @@ resource "null_resource" "lambda_package" {
     handler      = filemd5("${path.module}/../backend/handler.py")
   }
 
-  provisioner "local-exec" {
+    provisioner "local-exec" {
+    interpreter = ["PowerShell", "-Command"]
     environment = {
       HANDLER_SRC = abspath("${path.module}/../backend/handler.py")
       HANDLER_DST = abspath("${path.module}/../backend/package/handler.py")
     }
-    command = "pip install -r ${path.module}/../backend/requirements.txt -t ${path.module}/../backend/package --upgrade --no-user --platform manylinux2014_x86_64 --only-binary=:all: --python-version 3.11 && python -c \"import shutil, os, pathlib; pathlib.Path(os.environ['HANDLER_DST']).parent.mkdir(parents=True, exist_ok=True); shutil.copyfile(os.environ['HANDLER_SRC'], os.environ['HANDLER_DST'])\""
+    command = <<-EOT
+      pip install -r ${path.module}/../backend/requirements.txt -t ${path.module}/../backend/package --upgrade --no-user --platform manylinux2014_x86_64 --only-binary=:all: --python-version 3.11
+      if ($LASTEXITCODE -eq 0) {
+        New-Item -ItemType Directory -Force -Path (Split-Path $env:HANDLER_DST) | Out-Null
+        Copy-Item -Path $env:HANDLER_SRC -Destination $env:HANDLER_DST -Force
+      } else { exit 1 }
+    EOT
   }
 }
 
@@ -42,6 +49,8 @@ resource "aws_lambda_function" "leave_api_handler" {
       POLICIES_TABLE  = aws_dynamodb_table.leave_policies.name
       SESSIONS_TABLE  = aws_dynamodb_table.sessions.name
       ADMIN_PASSWORD  = var.admin_password
+      NOTIFICATIONS_TABLE  =aws_dynamodb_table.notifications.name
+      COGNITO_USER_POOL_ID = aws_cognito_user_pool.main.id
     }
   }
 }

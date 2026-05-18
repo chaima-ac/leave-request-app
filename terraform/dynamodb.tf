@@ -154,3 +154,38 @@ resource "aws_dynamodb_table" "leave_policies" {
     Project = "GestionDeConges-Serverless"
   }
 }
+# =============================================
+#  DynamoDB Table — Notifications
+# =============================================
+
+resource "aws_dynamodb_table" "notifications" {
+  name         = "Notifications"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "notification_id"
+
+  attribute {
+    name = "notification_id"
+    type = "S"
+  }
+
+  attribute {
+    name = "recipient_id"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "recipient_id-index"
+    hash_key        = "recipient_id"
+    projection_type = "ALL"
+  }
+
+  server_side_encryption {
+    enabled     = true
+    kms_key_arn = aws_kms_key.dynamodb_key.arn
+  }
+
+  tags = {
+    Name    = "Notifications"
+    Project = "GestionDeConges-Serverless"
+  }
+}

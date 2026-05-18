@@ -6,6 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import { login as loginApi, adminLogin } from '../services/api';
 import { Sun, Moon, Globe, Eye, EyeOff, Shield, ArrowRight } from 'lucide-react';
 import AppLogo from '../components/AppLogo';
+import { cognitoLogin } from '../services/cognito'
 
 const LoginPage = () => {
   const { t, i18n } = useTranslation();
@@ -25,46 +26,38 @@ const LoginPage = () => {
     localStorage.setItem('language', nl);
   };
 
-  const handleSubmit = async (e) => {
+    const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
       if (adminMode) {
-        const res = await adminLogin({ password: form.password.trim() });
-        login({ token: res.data.token, role: 'admin', name: 'Admin', email: 'admin', employeeId: 'admin', department: '' });
+        const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
+        const result = await cognitoLogin(adminEmail, form.password.trim());
+        login({
+          token:      result.idToken,
+          role:       'admin',
+          name:       'Admin',
+          email:      adminEmail,
+          employeeId: 'admin',
+          department: '',
+        });
         navigate('/admin');
       } else {
-        const res = await loginApi({ email: form.email, password: form.password });
-        const d = res.data;
+        const result = await cognitoLogin(form.email.trim(), form.password);
+        const payload = result.payload;
         login({
-          token:      d.token,
-          role:       d.role,
-          name:       d.name,
-          email:      form.email,
-          employeeId: d.employee_id,
-          department: d.department || '',
+          token:      result.idToken,
+          role:       payload['custom:role']        || 'employee',
+          name:       payload['name']               || form.email,
+          email:      form.email.trim(),
+          employeeId: payload['custom:employee_id'] || '',
+          department: '',
         });
-        navigate(`/${d.role}`);
+        navigate(`/${payload['custom:role'] || 'employee'}`);
       }
     } catch (err) {
-      const data = err.response?.data;
-      const status = err.response?.status;
-      const backendError =
-        (typeof data === 'object' && (data?.error || data?.message)) ||
-        (typeof data === 'string' && data) ||
-        '';
-
-      if (backendError) {
-        setError(backendError);
-      } else if (!import.meta.env.VITE_API_URL) {
-        setError('API is not configured. Set VITE_API_URL in your frontend environment.');
-      } else {
-        const fallback = err.message
-          ? `${err.message}${status ? ` (HTTP ${status})` : ''}`
-          : `Request failed${status ? ` (HTTP ${status})` : ''}`;
-        setError(fallback);
-      }
+      setError(err.message || 'Login failed. Please check your credentials.');
     }
     setLoading(false);
   };

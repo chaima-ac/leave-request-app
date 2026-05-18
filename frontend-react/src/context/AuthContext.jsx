@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { cognitoLogout } from '../services/cognito';
 
 const AuthContext = createContext(null);
 
@@ -32,6 +33,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    cognitoLogout();
     // Only clear auth keys — preserve per-user read notification state
     ['ld_token','ld_role','ld_name','ld_email','ld_employee_id','ld_department'].forEach(k =>
       localStorage.removeItem(k)

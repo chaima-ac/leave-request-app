@@ -7,14 +7,17 @@ import bcrypt
 from datetime import datetime, timedelta
 from decimal import Decimal
 from boto3.dynamodb.conditions import Key
-
+import re
 dynamodb = boto3.resource('dynamodb')
+ses_client     = boto3.client('ses', region_name='us-east-1')
+cognito_client = boto3.client('cognito-idp', region_name='us-east-1')
 requests_table  = dynamodb.Table(os.environ.get('DYNAMODB_TABLE',  'LeaveRequests'))
 employees_table = dynamodb.Table(os.environ.get('EMPLOYEES_TABLE', 'Employees'))
 sessions_table  = dynamodb.Table(os.environ.get('SESSIONS_TABLE',  'Sessions'))
 policies_table  = dynamodb.Table(os.environ.get('POLICIES_TABLE',  'LeavePolicies'))
-
+notifications_table = dynamodb.Table(os.environ.get('NOTIFICATIONS_TABLE', 'Notifications'))
 ADMIN_PASSWORD = (os.environ.get('ADMIN_PASSWORD', 'admin123') or '').strip()
+USER_POOL_ID = os.environ.get('COGNITO_USER_POOL_ID', '')
 VALID_ROLES    = ['employee', 'manager', 'hr', 'admin']
 
 DEFAULT_POLICY = {
@@ -96,7 +99,74 @@ def calc_days(start, end):
 
 def is_privileged(s): return s and s.get("role") in ("admin", "hr", "manager")
 def is_admin_or_hr(s): return s and s.get("role") in ("admin", "hr")
+def get_session_from_claims(event):
+    try:
+        claims = (event.get("requestContext") or {}) \
+                     .get("authorizer", {}) \
+                     .get("jwt", {}) \
+                     .get("claims", {})
+        if not claims:
+            return None
+        return {
+            "employee_id": claims.get("custom:employee_id", ""),
+            "role":        claims.get("custom:role", "employee"),
+            "email":       claims.get("email", ""),
+        }
+    except:
+        return None
 
+def cognito_create_user(email, password, employee_id, role, name=""):
+    if not USER_POOL_ID:
+        return
+    cognito_client.admin_create_user(
+        UserPoolId=USER_POOL_ID,
+        Username=email,
+        TemporaryPassword=password,
+        MessageAction="SUPPRESS",
+        UserAttributes=[
+            {"Name": "email",              "Value": email},
+            {"Name": "email_verified",     "Value": "true"},
+            {"Name": "custom:role",        "Value": role},
+            {"Name": "custom:employee_id", "Value": employee_id},
+            {"Name": "name", "Value": name},
+        ]
+    )
+    cognito_client.admin_set_user_password(
+        UserPoolId=USER_POOL_ID,
+        Username=email,
+        Password=password,
+        Permanent=True
+    )
+
+def cognito_update_user_attributes(email, role, employee_id):
+    if not USER_POOL_ID:
+        return
+    try:
+        cognito_client.admin_update_user_attributes(
+            UserPoolId=USER_POOL_ID,
+            Username=email,
+            UserAttributes=[
+                {"Name": "custom:role",        "Value": role},
+                {"Name": "custom:employee_id", "Value": employee_id},
+            ]
+        )
+    except Exception as e:
+        print(f"Cognito update error: {e}")
+
+def create_notification(recipient_id, message, request_id=None):
+    item = {
+        "notification_id": str(uuid.uuid4()),
+        "recipient_id":    recipient_id,
+        "message":         message,
+        "is_read":         False,
+        "created_at":      datetime.utcnow().isoformat(),
+    }
+    if request_id:
+        item["request_id"] = request_id
+    try:
+        notifications_table.put_item(Item=item)
+    except Exception as e:
+        print(f"Notification error: {e}")
 def get_balance_vals(emp, lt):
     """Return (total, used) as ints for a leave type."""
     policy = get_policy()
@@ -164,6 +234,10 @@ def lambda_handler(event, context):
                 "department": dept, "leave_balance": make_balance(get_policy()),
                 "created_at": datetime.utcnow().isoformat()
             })
+            try:
+                cognito_create_user(email, pw, eid, "employee",name)
+            except Exception as ce:
+                print(f"Cognito register error: {ce}")
             tok = create_session(eid, "employee")
             return respond(200, {"message": "Account created", "token": tok,
                                  "employee_id": eid, "name": name, "email": email, "role": "employee"})
@@ -254,9 +328,14 @@ def lambda_handler(event, context):
                 "created_at":      datetime.utcnow().isoformat(),
             }
             requests_table.put_item(Item=item)
+            manager_id = emp.get("manager_id", "")
+            if manager_id:
+                mgr = get_employee(manager_id)
+                if mgr:
+                    msg = f"New leave request from {emp['name']} ({lt}, {start_date} to {end_date}) is awaiting your review."
+                    create_notification(manager_id, msg, item["request_id"])
             return respond(200, {"message": "Request submitted", "request_id": item["request_id"],
                                  "balance_exceeded": balance_exceeded, "remaining_before": remaining})
-
         # PUT /cancel-request
         elif path.endswith("/cancel-request") and method == "PUT":
             if not session or session.get("role") != "employee":
@@ -294,6 +373,17 @@ def lambda_handler(event, context):
                 ExpressionAttributeNames={"#s": "status", "#u": "updated_at"},
                 ExpressionAttributeValues={":s": new_status, ":c": comment, ":u": datetime.utcnow().isoformat()}
             )
+            emp_notify = get_employee(req.get("employee_id", ""))
+            if new_status == "rejected_manager":
+                if emp_notify:
+                    msg = f"Your leave request ({req.get('leave_type')}, {req.get('start_date')} to {req.get('end_date')}) was rejected by your manager. Comment: {comment}"
+                    create_notification(req["employee_id"], msg, rid)
+            else:
+                hr_users = [u for u in employees_table.scan().get("Items", []) if u.get("role") == "hr"]
+                emp_name = emp_notify["name"] if emp_notify else "An employee"
+                hr_msg = f"Leave request from {emp_name} ({req.get('leave_type')}, {req.get('start_date')} to {req.get('end_date')}) was approved by the manager and is awaiting your review."
+                for hr in hr_users:
+                    create_notification(hr["employee_id"], hr_msg, rid)
             return respond(200, {"message": "Review submitted", "status": new_status})
 
         # PUT /hr-review
@@ -337,6 +427,13 @@ def lambda_handler(event, context):
                     UpdateExpression="SET leave_balance = :m",
                     ExpressionAttributeValues={":m": merged_balance}
                 )
+            emp_notify = get_employee(req.get("employee_id", ""))
+            if emp_notify:
+                if new_status == "approved":
+                    msg = f"Your leave request ({req.get('leave_type')}, {req.get('start_date')} to {req.get('end_date')}) has been APPROVED by HR."
+                else:
+                    msg = f"Your leave request ({req.get('leave_type')}, {req.get('start_date')} to {req.get('end_date')}) has been REJECTED by HR. Comment: {comment}"
+                create_notification(req["employee_id"], msg, rid)
             return respond(200, {"message": "Review submitted", "status": new_status})
 
         # GET /admin/stats
@@ -410,6 +507,10 @@ def lambda_handler(event, context):
                 "leave_balance": make_balance(get_policy()),
                 "created_at": datetime.utcnow().isoformat()
             })
+            try:
+                cognito_create_user(email, pw, eid, role,name)
+            except Exception as ce:
+                print(f"Cognito create-user error: {ce}")
             return respond(200, {"message": "User created successfully", "employee_id": eid,
                                  "name": name, "email": email, "role": role})
 
@@ -485,6 +586,29 @@ def lambda_handler(event, context):
                 ExpressionAttributeValues={":m": merged}
             )
             return respond(200, {"message": "Balance updated"})
+
+        # GET /notifications
+        elif path.endswith("/notifications") and method == "GET":
+            if not session: return respond(401, {"error": "Unauthorized"})
+            result = notifications_table.query(
+                IndexName="recipient_id-index",
+                KeyConditionExpression=Key("recipient_id").eq(session["employee_id"])
+            )
+            notifs = sorted(result.get("Items", []), key=lambda x: x.get("created_at", ""), reverse=True)
+            unread = len([n for n in notifs if not n.get("is_read")])
+            return respond(200, {"notifications": notifs, "unread_count": unread})
+
+        # PUT /notifications/read
+        elif path.endswith("/notifications/read") and method == "PUT":
+            if not session: return respond(401, {"error": "Unauthorized"})
+            nid = body.get("notification_id")
+            if not nid: return respond(400, {"error": "notification_id is required"})
+            notifications_table.update_item(
+                Key={"notification_id": nid},
+                UpdateExpression="SET is_read = :r",
+                ExpressionAttributeValues={":r": True}
+            )
+            return respond(200, {"message": "Marked as read"})
 
         else:
             return respond(404, {"error": "Route not found"})

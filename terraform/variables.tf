@@ -26,3 +26,8 @@ variable "alert_email" {
   description = "Email address to receive CloudWatch alarm notifications"
   type        = string
 }
+
+variable "admin_email" {
+  description = "Email address for the admin Cognito user"
+  type        = string
+}
