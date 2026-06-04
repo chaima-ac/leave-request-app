@@ -7,18 +7,17 @@ resource "null_resource" "lambda_package" {
     handler      = filemd5("${path.module}/../backend/handler.py")
   }
 
-    provisioner "local-exec" {
-    interpreter = ["PowerShell", "-Command"]
-    environment = {
-      HANDLER_SRC = abspath("${path.module}/../backend/handler.py")
-      HANDLER_DST = abspath("${path.module}/../backend/package/handler.py")
-    }
-    command = <<-EOT
-      pip install -r ${path.module}/../backend/requirements.txt -t ${path.module}/../backend/package --upgrade --no-user --platform manylinux2014_x86_64 --only-binary=:all: --python-version 3.11
-      if ($LASTEXITCODE -eq 0) {
-        New-Item -ItemType Directory -Force -Path (Split-Path $env:HANDLER_DST) | Out-Null
-        Copy-Item -Path $env:HANDLER_SRC -Destination $env:HANDLER_DST -Force
-      } else { exit 1 }
+  provisioner "local-exec" {
+    interpreter = ["bash", "-c"]
+    command     = <<-EOT
+      pip install \
+        -r ${path.module}/../backend/requirements.txt \
+        -t ${path.module}/../backend/package \
+        --upgrade --no-user \
+        --platform manylinux2014_x86_64 --only-binary=:all: \
+        --python-version 3.11 \
+      && mkdir -p ${path.module}/../backend/package \
+      && cp ${path.module}/../backend/handler.py ${path.module}/../backend/package/handler.py
     EOT
   }
 }
