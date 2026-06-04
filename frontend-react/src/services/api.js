@@ -32,26 +32,39 @@ api.interceptors.request.use(async (config) => {
 });
 
 // ── Response interceptor — handle 401 (token expired) ────────────────────
-// Guard with _retried flag to prevent infinite retry loops:
-// without it, a refresh that succeeds but whose retry still gets 401
-// would call this interceptor again forever.
+// Guard with _retried flag to prevent infinite retry loops.
+// If we get 401 after one refresh attempt, the session is unrecoverable
+// (expired refresh token or pool mismatch) — clear auth and go to login.
+const forceLogout = () => {
+  ['ld_token','ld_role','ld_name','ld_email','ld_employee_id','ld_department'].forEach(k =>
+    localStorage.removeItem(k)
+  );
+  // Hard redirect — clears React state and forces a fresh login
+  window.location.replace('/login');
+};
+
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const status = error?.response?.status;
-    if (status === 401 && !error.config?._retried) {
-      error.config._retried = true; // only ever retry once
-      try {
-        const newToken = await cognitoRefreshSession();
-        if (newToken && error.config) {
-          error.config.headers.Authorization = `Bearer ${newToken}`;
-          // Also update localStorage so future requests use the refreshed token
-          localStorage.setItem('ld_token', newToken);
-          return api.request(error.config);
+    if (status === 401) {
+      if (!error.config?._retried) {
+        // First 401 — try a silent Cognito token refresh once
+        error.config._retried = true;
+        try {
+          const newToken = await cognitoRefreshSession();
+          if (newToken) {
+            error.config.headers.Authorization = `Bearer ${newToken}`;
+            localStorage.setItem('ld_token', newToken);
+            return api.request(error.config);
+          }
+        } catch (_) {
+          // Refresh failed — fall through to forceLogout below
         }
-      } catch (_) {
-        // Refresh failed — let the caller handle the 401
       }
+      // Still 401 after refresh attempt — session is dead, send to login
+      forceLogout();
+      return new Promise(() => {}); // hang to prevent error propagating during redirect
     }
     return Promise.reject(error);
   }
