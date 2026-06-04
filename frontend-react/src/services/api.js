@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { cognitoGetCurrentToken, cognitoRefreshSession } from './cognito';
 
 const rawApiBase = (import.meta.env.VITE_API_URL || '').trim();
 const API_BASE = rawApiBase.replace(/\/+$/, '');
@@ -6,27 +7,48 @@ const isValidApiBase = /^https?:\/\//i.test(API_BASE);
 
 const api = axios.create({ baseURL: isValidApiBase ? API_BASE : undefined });
 
-api.interceptors.request.use((config) => {
+// ── Request interceptor — attach Cognito idToken ───────────────────────────
+api.interceptors.request.use(async (config) => {
   if (!isValidApiBase) {
     return Promise.reject(
       new Error('API is misconfigured. Set VITE_API_URL to your API Gateway URL (https://.../dev).')
     );
   }
-  const token = localStorage.getItem('ld_token');
-  if (token) config.headers.Authorization = token;
+  const token = await cognitoGetCurrentToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
+// ── Response interceptor — handle 401 (token expired) ────────────────────
+api.interceptors.response.use(
+  (res) => res,
+  async (error) => {
+    const status = error?.response?.status;
+    if (status === 401) {
+      // Try to silently refresh the Cognito session once
+      try {
+        const newToken = await cognitoRefreshSession();
+        if (newToken && error.config) {
+          error.config.headers.Authorization = `Bearer ${newToken}`;
+          return api.request(error.config);
+        }
+      } catch (_) {
+        // Refresh failed — caller will handle the 401
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // ── Auth ───────────────────────────────────────────────────────────────────
-export const register   = (data) => api.post('/register',    data);
-export const login      = (data) => api.post('/login',       data);
-export const adminLogin = (data) => api.post('/admin-login', data);
+export const register   = (data) => api.post('/register', data);
+export const login      = (data) => api.post('/login',    data); // DynamoDB credential check (profile data)
 
 // ── Employee ───────────────────────────────────────────────────────────────
 export const getMyRequests = ()     => api.get('/my-requests');
 export const getMyBalance  = ()     => api.get('/my-balance');
-export const submitRequest = (data) => api.post('/submit',         data);
-export const cancelRequest = (data) => api.put('/cancel-request',  data);
+export const submitRequest = (data) => api.post('/submit',        data);
+export const cancelRequest = (data) => api.put('/cancel-request', data);
 
 // ── Manager — level 1 review ───────────────────────────────────────────────
 export const managerReview = (data) => api.put('/manager-review', data);
@@ -51,5 +73,9 @@ export const deleteRequest = (data) => api.delete('/admin/delete-request', { dat
 
 // ── Admin + HR ─────────────────────────────────────────────────────────────
 export const updateBalance = (data) => api.put('/admin/update-balance', data);
+
+// ── Notifications ──────────────────────────────────────────────────────────
+export const getNotifications       = ()     => api.get('/notifications');
+export const markNotificationRead   = (data) => api.put('/notifications/read', data);
 
 export default api;

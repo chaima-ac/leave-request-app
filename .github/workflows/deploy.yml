@@ -71,6 +71,7 @@ jobs:
           cat > terraform/terraform.tfvars << EOF
           admin_password = "${{ secrets.ADMIN_PASSWORD }}"
           alert_email    = "${{ secrets.ALERT_EMAIL }}"
+          admin_email    = "${{ secrets.ADMIN_EMAIL }}"
           EOF
 
       # ── Step 6: Terraform Init ─────────────────────────────

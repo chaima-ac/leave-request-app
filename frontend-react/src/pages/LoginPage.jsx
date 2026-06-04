@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { login as loginApi, adminLogin } from '../services/api';
 import { Sun, Moon, Globe, Eye, EyeOff, Shield, ArrowRight } from 'lucide-react';
 import AppLogo from '../components/AppLogo';
 import { cognitoLogin } from '../services/cognito'

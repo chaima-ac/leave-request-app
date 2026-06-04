@@ -44,12 +44,10 @@ resource "aws_lambda_function" "leave_api_handler" {
 
   environment {
     variables = {
-      DYNAMODB_TABLE  = aws_dynamodb_table.leave_requests.name
-      EMPLOYEES_TABLE = aws_dynamodb_table.employees.name
-      POLICIES_TABLE  = aws_dynamodb_table.leave_policies.name
-      SESSIONS_TABLE  = aws_dynamodb_table.sessions.name
-      ADMIN_PASSWORD  = var.admin_password
-      NOTIFICATIONS_TABLE  =aws_dynamodb_table.notifications.name
+      DYNAMODB_TABLE       = aws_dynamodb_table.leave_requests.name
+      EMPLOYEES_TABLE      = aws_dynamodb_table.employees.name
+      POLICIES_TABLE       = aws_dynamodb_table.leave_policies.name
+      NOTIFICATIONS_TABLE  = aws_dynamodb_table.notifications.name
       COGNITO_USER_POOL_ID = aws_cognito_user_pool.main.id
     }
   }
