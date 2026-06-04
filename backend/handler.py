@@ -127,6 +127,20 @@ def create_notification(recipient_id, message, request_id=None):
     except Exception as e:
         print(f"Notification error: {e}")
 
+def validate_password(pw):
+    """
+    Returns an error string if pw doesn't satisfy the Cognito password policy,
+    or None if it's valid.
+    Policy (cognito.tf): min 8 chars, at least 1 lowercase, at least 1 digit.
+    """
+    if len(pw) < 8:
+        return "Password must be at least 8 characters."
+    if not any(c.islower() for c in pw):
+        return "Password must contain at least one lowercase letter."
+    if not any(c.isdigit() for c in pw):
+        return "Password must contain at least one number."
+    return None
+
 def cognito_create_user(email, password, employee_id, role, name=""):
     if not USER_POOL_ID:
         return
@@ -197,8 +211,9 @@ def lambda_handler(event, context):
             dept  = (body.get("department") or "").strip()
             if not name or not email or not pw:
                 return respond(400, {"error": "Name, email and password are required."})
-            if len(pw) < 6:
-                return respond(400, {"error": "Password must be at least 6 characters."})
+            pw_err = validate_password(pw)
+            if pw_err:
+                return respond(400, {"error": pw_err})
             if employees_table.query(
                 IndexName="email-index",
                 KeyConditionExpression=Key("email").eq(email)
@@ -218,8 +233,11 @@ def lambda_handler(event, context):
             try:
                 cognito_create_user(email, pw, eid, "employee", name)
             except Exception as ce:
-                print(f"Cognito register error: {ce}")
-            # No session token returned — frontend authenticates via Cognito directly
+                # Rollback the DynamoDB write — a user with no Cognito account
+                # cannot log in, so a half-created record is worse than nothing.
+                employees_table.delete_item(Key={"employee_id": eid})
+                print(f"Cognito register error (rolled back): {ce}")
+                return respond(500, {"error": "Account could not be created. Please try again."})
             return respond(200, {
                 "message":     "Account created",
                 "employee_id": eid,
@@ -549,8 +567,9 @@ def lambda_handler(event, context):
                 return respond(400, {"error": "Cannot create additional admin accounts."})
             if role not in VALID_ROLES:
                 return respond(400, {"error": f"Role must be one of: {', '.join(VALID_ROLES)}"})
-            if len(pw) < 6:
-                return respond(400, {"error": "Password must be at least 6 characters."})
+            pw_err = validate_password(pw)
+            if pw_err:
+                return respond(400, {"error": pw_err})
             if employees_table.query(
                 IndexName="email-index",
                 KeyConditionExpression=Key("email").eq(email)
@@ -574,7 +593,10 @@ def lambda_handler(event, context):
             try:
                 cognito_create_user(email, pw, eid, role, name)
             except Exception as ce:
-                print(f"Cognito create-user error: {ce}")
+                # Rollback — a user with no Cognito account cannot log in.
+                employees_table.delete_item(Key={"employee_id": eid})
+                print(f"Cognito create-user error (rolled back): {ce}")
+                return respond(500, {"error": f"User could not be created in the identity provider: {str(ce)}"})
             return respond(200, {
                 "message":     "User created successfully",
                 "employee_id": eid,
