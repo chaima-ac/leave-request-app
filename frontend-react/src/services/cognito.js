@@ -43,7 +43,7 @@ export function cognitoLogout() {
 // so the caller can fall back to the localStorage token instead of hanging.
 export function cognitoGetCurrentToken() {
   return new Promise((resolve) => {
-    const timer = setTimeout(() => resolve(null), 3000);
+    const timer = setTimeout(() => resolve(null), 8000); // 8 s — AWS Academy Cognito can be slow
 
     const user = userPool.getCurrentUser();
     if (!user) { clearTimeout(timer); return resolve(null); }

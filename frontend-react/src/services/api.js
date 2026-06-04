@@ -7,7 +7,7 @@ const isValidApiBase = /^https?:\/\//i.test(API_BASE);
 
 const api = axios.create({
   baseURL: isValidApiBase ? API_BASE : undefined,
-  timeout: 15000, // 15 s — prevents the dashboard from loading forever on Lambda cold start
+  timeout: 30000, // 30 s — Lambda cold start in AWS Academy can take up to 10-15 s
 });
 
 // ── Request interceptor — attach Cognito idToken ───────────────────────────
