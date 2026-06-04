@@ -11,6 +11,7 @@ const poolData = {
 
 const userPool = new CognitoUserPool(poolData);
 
+// ── Login ──────────────────────────────────────────────────────────────────
 export function cognitoLogin(email, password) {
   return new Promise((resolve, reject) => {
     const user    = new CognitoUser({ Username: email, Pool: userPool });
@@ -19,8 +20,8 @@ export function cognitoLogin(email, password) {
     user.authenticateUser(details, {
       onSuccess: (result) => {
         resolve({
-          idToken:  result.getIdToken().getJwtToken(),
-          payload:  result.getIdToken().payload,
+          idToken: result.getIdToken().getJwtToken(),
+          payload: result.getIdToken().payload,
         });
       },
       onFailure: (err) => reject(err),
@@ -30,7 +31,41 @@ export function cognitoLogin(email, password) {
   });
 }
 
+// ── Logout ─────────────────────────────────────────────────────────────────
 export function cognitoLogout() {
   const user = userPool.getCurrentUser();
   if (user) user.signOut();
+}
+
+// ── Get current valid idToken (used by api.js interceptor) ─────────────────
+// Returns the idToken string if the session is valid, or null.
+export function cognitoGetCurrentToken() {
+  return new Promise((resolve) => {
+    const user = userPool.getCurrentUser();
+    if (!user) return resolve(null);
+
+    user.getSession((err, session) => {
+      if (err || !session || !session.isValid()) return resolve(null);
+      resolve(session.getIdToken().getJwtToken());
+    });
+  });
+}
+
+// ── Silent refresh (used by api.js response interceptor on 401) ────────────
+// Forces a token refresh via the stored refresh token. Returns the new idToken.
+export function cognitoRefreshSession() {
+  return new Promise((resolve, reject) => {
+    const user = userPool.getCurrentUser();
+    if (!user) return reject(new Error('No current user'));
+
+    user.getSession((err, session) => {
+      if (err || !session) return reject(err || new Error('No session'));
+
+      const refreshToken = session.getRefreshToken();
+      user.refreshSession(refreshToken, (refreshErr, newSession) => {
+        if (refreshErr || !newSession) return reject(refreshErr || new Error('Refresh failed'));
+        resolve(newSession.getIdToken().getJwtToken());
+      });
+    });
+  });
 }
