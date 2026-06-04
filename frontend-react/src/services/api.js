@@ -35,7 +35,16 @@ api.interceptors.request.use(async (config) => {
 // Guard with _retried flag to prevent infinite retry loops.
 // If we get 401 after one refresh attempt, the session is unrecoverable
 // (expired refresh token or pool mismatch) — clear auth and go to login.
+
+// Module-level guard: prevents a second in-flight 401 (e.g. from the
+// NotificationsDropdown polling in parallel) from firing forceLogout
+// a second time AFTER the user has already successfully logged back in.
+let _loggingOut = false;
+
 const forceLogout = () => {
+  if (_loggingOut) return;           // already in progress, ignore duplicate 401s
+  if (!localStorage.getItem('ld_token')) return;  // already logged out (no token), skip
+  _loggingOut = true;
   ['ld_token','ld_role','ld_name','ld_email','ld_employee_id','ld_department'].forEach(k =>
     localStorage.removeItem(k)
   );
