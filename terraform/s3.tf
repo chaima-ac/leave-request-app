@@ -7,7 +7,8 @@ resource "random_string" "suffix" {
 
 # S3 Bucket for frontend
 resource "aws_s3_bucket" "frontend" {
-  bucket = "leave-management-frontend-${random_string.suffix.result}"
+  bucket        = "leave-management-frontend-${random_string.suffix.result}"
+  force_destroy = true # allows terraform destroy to delete the bucket even if it has objects
 
   tags = {
     Name = "LeaveManagementFrontend"
