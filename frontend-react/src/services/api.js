@@ -5,7 +5,10 @@ const rawApiBase = (import.meta.env.VITE_API_URL || '').trim();
 const API_BASE = rawApiBase.replace(/\/+$/, '');
 const isValidApiBase = /^https?:\/\//i.test(API_BASE);
 
-const api = axios.create({ baseURL: isValidApiBase ? API_BASE : undefined });
+const api = axios.create({
+  baseURL: isValidApiBase ? API_BASE : undefined,
+  timeout: 15000, // 15 s — prevents the dashboard from loading forever on Lambda cold start
+});
 
 // ── Request interceptor — attach Cognito idToken ───────────────────────────
 api.interceptors.request.use(async (config) => {
@@ -14,26 +17,40 @@ api.interceptors.request.use(async (config) => {
       new Error('API is misconfigured. Set VITE_API_URL to your API Gateway URL (https://.../dev).')
     );
   }
-  const token = await cognitoGetCurrentToken();
+
+  // 1. Try the Cognito SDK (handles auto-refresh internally, 3 s timeout)
+  let token = await cognitoGetCurrentToken();
+
+  // 2. Fallback: use the JWT stored in localStorage by AuthContext at login
+  //    (ld_token IS the Cognito idToken — same value, just stored separately)
+  if (!token) {
+    token = localStorage.getItem('ld_token') || null;
+  }
+
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
 // ── Response interceptor — handle 401 (token expired) ────────────────────
+// Guard with _retried flag to prevent infinite retry loops:
+// without it, a refresh that succeeds but whose retry still gets 401
+// would call this interceptor again forever.
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const status = error?.response?.status;
-    if (status === 401) {
-      // Try to silently refresh the Cognito session once
+    if (status === 401 && !error.config?._retried) {
+      error.config._retried = true; // only ever retry once
       try {
         const newToken = await cognitoRefreshSession();
         if (newToken && error.config) {
           error.config.headers.Authorization = `Bearer ${newToken}`;
+          // Also update localStorage so future requests use the refreshed token
+          localStorage.setItem('ld_token', newToken);
           return api.request(error.config);
         }
       } catch (_) {
-        // Refresh failed — caller will handle the 401
+        // Refresh failed — let the caller handle the 401
       }
     }
     return Promise.reject(error);
@@ -75,7 +92,7 @@ export const deleteRequest = (data) => api.delete('/admin/delete-request', { dat
 export const updateBalance = (data) => api.put('/admin/update-balance', data);
 
 // ── Notifications ──────────────────────────────────────────────────────────
-export const getNotifications       = ()     => api.get('/notifications');
-export const markNotificationRead   = (data) => api.put('/notifications/read', data);
+export const getNotifications     = ()     => api.get('/notifications');
+export const markNotificationRead = (data) => api.put('/notifications/read', data);
 
 export default api;

@@ -41,8 +41,9 @@ const AdminDashboard = () => {
   const { user } = useAuth();
   const navigate  = useNavigate();
   const [requests,   setRequests]   = useState([]);
-  const [statsData,  setStatsData]  = useState(null); // from /admin/stats
+  const [statsData,  setStatsData]  = useState(null);
   const [loading,    setLoading]    = useState(true);
+  const [loadError,  setLoadError]  = useState(false);
 
   const isAdmin = user?.role === 'admin';
   const isHr    = user?.role === 'hr';
@@ -57,7 +58,10 @@ const AdminDashboard = () => {
         setStatsData(res.data.stats   || null);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setLoadError(true);
+        setLoading(false);
+      });
   }, []);
 
   // ── Stats: prefer server-computed values, fall back to client-side counts ──
@@ -151,6 +155,20 @@ const AdminDashboard = () => {
             {[1,2,3,4].map(i => (
               <div key={i} className="h-24 rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
             ))}
+          </div>
+        ) : loadError ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-3">
+            <p className="text-slate-400 dark:text-slate-500 text-sm">Could not load dashboard data.</p>
+            <button
+              onClick={() => { setLoadError(false); setLoading(true);
+                getStats()
+                  .then(res => { setRequests(res.data.requests || []); setStatsData(res.data.stats || null); setLoading(false); })
+                  .catch(() => { setLoadError(true); setLoading(false); });
+              }}
+              className="text-xs font-semibold text-indigo-500 hover:text-indigo-400 transition-colors"
+            >
+              Try again
+            </button>
           </div>
         ) : (
           <>

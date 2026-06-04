@@ -39,12 +39,17 @@ export function cognitoLogout() {
 
 // ── Get current valid idToken (used by api.js interceptor) ─────────────────
 // Returns the idToken string if the session is valid, or null.
+// Hard timeout of 3 s — if the Cognito SDK network call stalls, resolve null
+// so the caller can fall back to the localStorage token instead of hanging.
 export function cognitoGetCurrentToken() {
   return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(null), 3000);
+
     const user = userPool.getCurrentUser();
-    if (!user) return resolve(null);
+    if (!user) { clearTimeout(timer); return resolve(null); }
 
     user.getSession((err, session) => {
+      clearTimeout(timer);
       if (err || !session || !session.isValid()) return resolve(null);
       resolve(session.getIdToken().getJwtToken());
     });
