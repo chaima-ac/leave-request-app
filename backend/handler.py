@@ -476,19 +476,24 @@ def lambda_handler(event, context):
             users = employees_table.scan().get("Items", [])
             reqs  = requests_table.scan().get("Items", [])
             def s(st): return len([r for r in reqs if r.get("status") == st])
-            return respond(200, {"stats": {
-                "total_requests":        len(reqs),
-                "pending_manager":       s("pending_manager"),
-                "pending_hr":            s("pending_hr"),
-                "approved":              s("approved"),
-                "rejected_manager":      s("rejected_manager"),
-                "rejected_hr":           s("rejected_hr"),
-                "cancelled":             s("cancelled"),
-                "balance_exceeded_count": len([r for r in reqs if r.get("balance_exceeded")]),
-                "total_employees":       len([u for u in users if u.get("role") == "employee"]),
-                "total_managers":        len([u for u in users if u.get("role") == "manager"]),
-                "total_hr":              len([u for u in users if u.get("role") == "hr"]),
-            }})
+            return respond(200, {
+                "stats": {
+                    "total_requests":         len(reqs),
+                    "pending_manager":        s("pending_manager"),
+                    "pending_hr":             s("pending_hr"),
+                    "approved":               s("approved"),
+                    "rejected_manager":       s("rejected_manager"),
+                    "rejected_hr":            s("rejected_hr"),
+                    "cancelled":              s("cancelled"),
+                    "balance_exceeded_count": len([r for r in reqs if r.get("balance_exceeded")]),
+                    "total_employees":        len([u for u in users if u.get("role") == "employee"]),
+                    "total_managers":         len([u for u in users if u.get("role") == "manager"]),
+                    "total_hr":               len([u for u in users if u.get("role") == "hr"]),
+                },
+                # Include the full requests list so the dashboard only needs
+                # one API call instead of calling GET /requests separately.
+                "requests": reqs,
+            })
 
         # ── GET /leave-policy ──────────────────────────────────────────────
         elif path.endswith("/leave-policy") and method == "GET":

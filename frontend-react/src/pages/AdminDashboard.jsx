@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { getAllRequests, getStats } from '../services/api';
+import { getStats } from '../services/api';
 import Navbar from '../components/Navbar';
 import { CheckCircle, TrendingUp, AlertCircle, CalendarDays, ShieldAlert } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -49,22 +49,15 @@ const AdminDashboard = () => {
   const roleBase = isHr ? '/hr' : '/admin';
 
   useEffect(() => {
-    // Fetch requests (for chart + table data) and server stats (for accurate counts) in parallel
-    Promise.all([
-      getAllRequests(),
-      getStats(),
-    ])
-      .then(([reqRes, statsRes]) => {
-        setRequests(reqRes.data.requests || []);
-        setStatsData(statsRes.data.stats  || null);
+    // Single call to /admin/stats — returns both the stats counts AND the full
+    // requests list, avoiding a redundant GET /requests scan.
+    getStats()
+      .then(res => {
+        setRequests(res.data.requests || []);
+        setStatsData(res.data.stats   || null);
         setLoading(false);
       })
-      .catch(() => {
-        // If stats fails (e.g. manager role), fall back to requests only
-        getAllRequests()
-          .then(res => { setRequests(res.data.requests || []); setLoading(false); })
-          .catch(() => setLoading(false));
-      });
+      .catch(() => setLoading(false));
   }, []);
 
   // ── Stats: prefer server-computed values, fall back to client-side counts ──
