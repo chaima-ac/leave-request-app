@@ -142,26 +142,46 @@ def validate_password(pw):
     return None
 
 def cognito_create_user(email, password, employee_id, role, name=""):
+    """
+    Create a Cognito user.  If the user already exists (e.g. DynamoDB was
+    wiped but Cognito was not), update their attributes and reset the password
+    instead of failing with UsernameExistsException.
+    """
     if not USER_POOL_ID:
         return
-    cognito_client.admin_create_user(
-        UserPoolId=USER_POOL_ID,
-        Username=email,
-        TemporaryPassword=password,
-        MessageAction="SUPPRESS",
-        UserAttributes=[
-            {"Name": "email",              "Value": email},
-            {"Name": "email_verified",     "Value": "true"},
-            {"Name": "custom:role",        "Value": role},
-            {"Name": "custom:employee_id", "Value": employee_id},
-            {"Name": "name",               "Value": name},
-        ]
-    )
+
+    attrs = [
+        {"Name": "email",              "Value": email},
+        {"Name": "email_verified",     "Value": "true"},
+        {"Name": "custom:role",        "Value": role},
+        {"Name": "custom:employee_id", "Value": employee_id},
+        {"Name": "name",               "Value": name},
+    ]
+
+    try:
+        cognito_client.admin_create_user(
+            UserPoolId=USER_POOL_ID,
+            Username=email,
+            TemporaryPassword=password,
+            MessageAction="SUPPRESS",
+            UserAttributes=attrs,
+        )
+    except cognito_client.exceptions.UsernameExistsException:
+        # User exists in Cognito but not in DynamoDB (e.g. after a data reset).
+        # Update their attributes to match the new record and fall through to
+        # set the password below.
+        cognito_client.admin_update_user_attributes(
+            UserPoolId=USER_POOL_ID,
+            Username=email,
+            UserAttributes=attrs,
+        )
+
+    # Set (or reset) the permanent password in both cases
     cognito_client.admin_set_user_password(
         UserPoolId=USER_POOL_ID,
         Username=email,
         Password=password,
-        Permanent=True
+        Permanent=True,
     )
 
 def cognito_update_user_attributes(email, role, employee_id):
