@@ -1,4 +1,4 @@
-name: Deploy LeaveDesk to AWS
+name: Deploy LeaveDesk backend to AWS
 
 on:
   push:
@@ -22,34 +22,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # ── Step 2: Build React frontend ──────────────────────
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      - name: Install frontend dependencies
-        working-directory: frontend-react
-        run: npm install
-
-      - name: Build React app
-        working-directory: frontend-react
-        env:
-          VITE_API_URL:              https://txgblifa8c.execute-api.us-east-1.amazonaws.com/dev
-          VITE_COGNITO_USER_POOL_ID: us-east-1_HVhqMWwly
-          VITE_COGNITO_CLIENT_ID:    3a4m078quh54vpdjb72r0uue8d
-          VITE_ADMIN_EMAIL:          ${{ secrets.ADMIN_EMAIL }}
-        run: npm run build
-
-      # ── Step 3: Install Terraform ─────────────────────────
+      # ── Step 2: Build Lambda deployment package ───────────
+      # archive_file.lambda_zip evaluates at plan time, so the
+      # package must exist before terraform init.
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      # archive_file.lambda_zip runs during terraform plan — before null_resource provisioners.
-      # Build the Lambda layer here so ./backend/package exists when Terraform reads it.
-      - name: Build Lambda deployment package (for Terraform archive)
+      - name: Build Lambda package
         run: |
           pip install -r backend/requirements.txt -t backend/package \
             --upgrade --no-user \
@@ -58,17 +39,12 @@ jobs:
           mkdir -p backend/package
           cp backend/handler.py backend/package/handler.py
 
+      # ── Step 3: Terraform ─────────────────────────────────
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.0
 
-      # ── Step 4: Create empty credentials file ─────────────
-      - name: Create credentials file
-        run: |
-          touch credentials
-
-      # ── Step 5: Create terraform.tfvars ───────────────────
       - name: Create terraform.tfvars
         run: |
           cat > terraform/terraform.tfvars << EOF
@@ -77,17 +53,14 @@ jobs:
           admin_email    = "${{ secrets.ADMIN_EMAIL }}"
           EOF
 
-      # ── Step 6: Terraform Init ─────────────────────────────
       - name: Terraform Init
         working-directory: terraform
         run: terraform init
 
-      # ── Step 7: Terraform Plan ─────────────────────────────
       - name: Terraform Plan
         working-directory: terraform
         run: terraform plan
 
-      # ── Step 8: Terraform Apply ────────────────────────────
       - name: Terraform Apply
         working-directory: terraform
         run: terraform apply -auto-approve
