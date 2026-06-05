@@ -56,14 +56,19 @@ def get_session_from_claims(event):
             .get("jwt", {})
             .get("claims", {})
         )
+        # Log to CloudWatch so we can diagnose missing/wrong claims
+        print(f"[DEBUG] JWT claims received: {claims}")
         if not claims:
             return None
+        role = claims.get("custom:role") or claims.get("role") or "employee"
+        eid  = claims.get("custom:employee_id") or claims.get("employee_id") or ""
         return {
-            "employee_id": claims.get("custom:employee_id", ""),
-            "role":        claims.get("custom:role", "employee"),
+            "employee_id": eid,
+            "role":        role,
             "email":       claims.get("email", ""),
         }
-    except Exception:
+    except Exception as e:
+        print(f"[DEBUG] get_session_from_claims error: {e}")
         return None
 
 def get_employee(eid):
@@ -510,7 +515,8 @@ def lambda_handler(event, context):
         # ── GET /admin/stats ───────────────────────────────────────────────
         elif path.endswith("/admin/stats") and method == "GET":
             if not is_admin_or_hr(session):
-                return respond(401, {"error": "Unauthorized"})
+                role_found = session.get("role", "NO_SESSION") if session else "NO_CLAIMS"
+                return respond(401, {"error": f"Unauthorized — role in token: '{role_found}'"})
             users = employees_table.scan().get("Items", [])
             reqs  = requests_table.scan().get("Items", [])
             def s(st): return len([r for r in reqs if r.get("status") == st])
