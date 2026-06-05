@@ -186,24 +186,29 @@ const AdminDashboard = () => {
           </div>
         ) : (
           <>
+            {/* ── People stat cards ─────────────────────────────────────────── */}
+            {statsData && (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <StatMini
+                  label="Total users"
+                  value={(stats.totalEmployees ?? 0) + (stats.totalManagers ?? 0) + (stats.totalHr ?? 0)}
+                  color="indigo"
+                />
+                <StatMini label="Employees" value={stats.totalEmployees} color="blue"   />
+                <StatMini label="Managers"  value={stats.totalManagers}  color="amber"  />
+                <StatMini label="HR staff"  value={stats.totalHr}        color="slate"  />
+              </div>
+            )}
+
             {/* ── Request stat cards ────────────────────────────────────────── */}
             <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-4">
-              <StatMini label="Total"           value={stats.total}           color="indigo"  />
+              <StatMini label="Total requests"  value={stats.total}           color="indigo"  />
               <StatMini label="Pending manager" value={stats.pendingManager}  color="amber"   />
               <StatMini label="Pending HR"      value={stats.pendingHr}       color="blue"    />
               <StatMini label="Approved"        value={stats.approved}        color="emerald" />
               <StatMini label="Rejected"        value={totalRejected}         color="red"     />
               <StatMini label="⚠️ Over balance" value={stats.balanceExceeded} color="slate"   />
             </div>
-
-            {/* ── People stat cards (server-accurate, admin/HR only) ─────────── */}
-            {statsData && (
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <StatMini label="Employees" value={stats.totalEmployees} color="indigo"  />
-                <StatMini label="Managers"  value={stats.totalManagers}  color="amber"   />
-                <StatMini label="HR staff"  value={stats.totalHr}        color="blue"    />
-              </div>
-            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
 
