@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { cognitoGetCurrentToken, cognitoRefreshSession } from './cognito';
+import { cognitoRefreshSession } from './cognito';
 
 const rawApiBase = (import.meta.env.VITE_API_URL || '').trim();
 const API_BASE = rawApiBase.replace(/\/+$/, '');
@@ -7,48 +7,37 @@ const isValidApiBase = /^https?:\/\//i.test(API_BASE);
 
 const api = axios.create({
   baseURL: isValidApiBase ? API_BASE : undefined,
-  timeout: 30000, // 30 s — Lambda cold start in AWS Academy can take up to 10-15 s
+  timeout: 30000,
 });
 
-// ── Request interceptor — attach Cognito idToken ───────────────────────────
-api.interceptors.request.use(async (config) => {
+// ── Request interceptor — attach Cognito idToken ──────────────────────────
+// We use ld_token (the raw Cognito idToken stored at login) directly.
+// The Cognito SDK's getCurrentUser/getSession path was causing timeouts and
+// intermittent failures in the AWS Academy environment — ld_token is
+// always the authoritative, most-recently-issued JWT.
+api.interceptors.request.use((config) => {
   if (!isValidApiBase) {
     return Promise.reject(
-      new Error('API is misconfigured. Set VITE_API_URL to your API Gateway URL (https://.../dev).')
+      new Error('API_URL not configured. Set VITE_API_URL.')
     );
   }
-
-  // 1. Try the Cognito SDK (handles auto-refresh internally, 3 s timeout)
-  let token = await cognitoGetCurrentToken();
-
-  // 2. Fallback: use the JWT stored in localStorage by AuthContext at login
-  //    (ld_token IS the Cognito idToken — same value, just stored separately)
-  if (!token) {
-    token = localStorage.getItem('ld_token') || null;
-  }
-
+  const token = localStorage.getItem('ld_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
 // ── Response interceptor — handle 401 (token expired) ────────────────────
-// Guard with _retried flag to prevent infinite retry loops.
-// If we get 401 after one refresh attempt, the session is unrecoverable
-// (expired refresh token or pool mismatch) — clear auth and go to login.
+// On 401: try a silent Cognito refresh once.
+// If refresh also fails, clear auth and redirect to login.
 
-// Module-level guard: prevents a second in-flight 401 (e.g. from the
-// NotificationsDropdown polling in parallel) from firing forceLogout
-// a second time AFTER the user has already successfully logged back in.
 let _loggingOut = false;
 
 const forceLogout = () => {
-  if (_loggingOut) return;           // already in progress, ignore duplicate 401s
-  if (!localStorage.getItem('ld_token')) return;  // already logged out (no token), skip
+  if (_loggingOut) return;
+  if (!localStorage.getItem('ld_token')) return; // already cleared
   _loggingOut = true;
-  ['ld_token','ld_role','ld_name','ld_email','ld_employee_id','ld_department'].forEach(k =>
-    localStorage.removeItem(k)
-  );
-  // Hard redirect — clears React state and forces a fresh login
+  ['ld_token','ld_role','ld_name','ld_email','ld_employee_id','ld_department']
+    .forEach(k => localStorage.removeItem(k));
   window.location.replace('/login');
 };
 
@@ -56,32 +45,30 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const status = error?.response?.status;
-    if (status === 401) {
-      if (!error.config?._retried) {
-        // First 401 — try a silent Cognito token refresh once
-        error.config._retried = true;
-        try {
-          const newToken = await cognitoRefreshSession();
-          if (newToken) {
-            error.config.headers.Authorization = `Bearer ${newToken}`;
-            localStorage.setItem('ld_token', newToken);
-            return api.request(error.config);
-          }
-        } catch (_) {
-          // Refresh failed — fall through to forceLogout below
+
+    if (status === 401 && !error.config?._retried) {
+      error.config._retried = true;
+      try {
+        const newToken = await cognitoRefreshSession();
+        if (newToken) {
+          localStorage.setItem('ld_token', newToken);
+          error.config.headers.Authorization = `Bearer ${newToken}`;
+          return api.request(error.config);
         }
+      } catch (_) {
+        // Refresh failed — session is unrecoverable
       }
-      // Still 401 after refresh attempt — session is dead, send to login
       forceLogout();
-      return new Promise(() => {}); // hang to prevent error propagating during redirect
+      return new Promise(() => {}); // prevent error propagation during redirect
     }
+
     return Promise.reject(error);
   }
 );
 
 // ── Auth ───────────────────────────────────────────────────────────────────
-export const register   = (data) => api.post('/register', data);
-export const login      = (data) => api.post('/login',    data); // DynamoDB credential check (profile data)
+export const register = (data) => api.post('/register', data);
+export const login    = (data) => api.post('/login',    data);
 
 // ── Employee ───────────────────────────────────────────────────────────────
 export const getMyRequests = ()     => api.get('/my-requests');
@@ -89,10 +76,10 @@ export const getMyBalance  = ()     => api.get('/my-balance');
 export const submitRequest = (data) => api.post('/submit',        data);
 export const cancelRequest = (data) => api.put('/cancel-request', data);
 
-// ── Manager — level 1 review ───────────────────────────────────────────────
+// ── Manager ────────────────────────────────────────────────────────────────
 export const managerReview = (data) => api.put('/manager-review', data);
 
-// ── HR — level 2 final review ──────────────────────────────────────────────
+// ── HR ─────────────────────────────────────────────────────────────────────
 export const hrReview = (data) => api.put('/hr-review', data);
 
 // ── Shared ─────────────────────────────────────────────────────────────────
