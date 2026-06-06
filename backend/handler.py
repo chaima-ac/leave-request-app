@@ -62,6 +62,16 @@ def get_session_from_claims(event):
             return None
         role = claims.get("custom:role") or claims.get("role") or "employee"
         eid  = claims.get("custom:employee_id") or claims.get("employee_id") or ""
+        # If the JWT role is stale (still 'employee' after a role change in the DB),
+        # fall back to the DynamoDB record which is always up to date.
+        if role == "employee" and eid:
+            try:
+                emp = get_employee(eid)
+                if emp and emp.get("role") and emp.get("role") != "employee":
+                    print(f"[DEBUG] JWT role override: token='employee', db='{emp['role']}'")
+                    role = emp["role"]
+            except Exception as lookup_err:
+                print(f"[DEBUG] DB role lookup failed: {lookup_err}")
         return {
             "employee_id": eid,
             "role":        role,
